@@ -1,0 +1,25 @@
+package testproto;
+
+message TestUint {
+	required uint32 Uint8  = 1;
+	required uint32 Uint16 = 2;
+	required uint32 Uint32 = 3;
+	required uint64 Uint64 = 4;
+}
+
+message TestInt {
+	required int32 Int8  = 1;
+	required int32 Int16 = 2;
+	required int32 Int32 = 3;
+	required int64 Int64 = 4;
+}
+
+message TestBool {
+	required bool Bool = 1;
+}
+
+message TestBytes {
+	required string String = 1;
+	required bytes Bytes   = 2;
+}
+
