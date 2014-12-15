@@ -1,17 +1,13 @@
 package testproto;
 
 message TestUint {
-	required uint32 Uint8  = 1;
-	required uint32 Uint16 = 2;
-	required uint32 Uint32 = 3;
-	required uint64 Uint64 = 4;
+	required uint32 Uint32 = 1;
+	required uint64 Uint64 = 2;
 }
 
 message TestInt {
-	required int32 Int8  = 1;
-	required int32 Int16 = 2;
-	required int32 Int32 = 3;
-	required int64 Int64 = 4;
+	required int32 Int32 = 1;
+	required int64 Int64 = 2;
 }
 
 message TestBool {
@@ -23,3 +19,11 @@ message TestBytes {
 	required bytes Bytes   = 2;
 }
 
+message TestSlice {
+	repeated uint32 Uint32Slice  = 1 [packed=true];
+	repeated uint64 Uint64Slice  = 2 [packed=true];
+	repeated int32 Int32Slice    = 3 [packed=true];
+	repeated int64 Int64Slice    = 4 [packed=true];
+	repeated bool BoolSlice      = 5 [packed=true];
+	repeated string StringSlice  = 6;
+}

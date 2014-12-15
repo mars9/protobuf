@@ -13,8 +13,6 @@ func TestUintUnmarshal(t *testing.T) {
 
 	for _, msg := range uintMessages {
 		pbMsg := testproto.TestUint{
-			Uint8:  proto.Uint32(uint32(msg.Uint8)),
-			Uint16: proto.Uint32(uint32(msg.Uint16)),
 			Uint32: proto.Uint32(msg.Uint32),
 			Uint64: proto.Uint64(msg.Uint64),
 		}
@@ -24,20 +22,11 @@ func TestUintUnmarshal(t *testing.T) {
 		}
 
 		var m = struct {
-			Uint8  uint8
-			Uint16 uint16
 			Uint32 uint32
 			Uint64 uint64
 		}{}
 		if err = Unmarshal(pb, &m); err != nil {
 			t.Fatalf("unmarshal uint: %v", err)
-		}
-
-		if msg.Uint8 != m.Uint8 {
-			t.Fatalf("unmarshal uint: expected uint8 %d, got %d", msg.Uint8, m.Uint8)
-		}
-		if msg.Uint16 != m.Uint16 {
-			t.Fatalf("unmarshal uint: expected uint16 %d, got %d", msg.Uint16, m.Uint16)
 		}
 		if msg.Uint32 != m.Uint32 {
 			t.Fatalf("unmarshal uint: expected uint32 %d, got %d", msg.Uint32, m.Uint32)
@@ -53,8 +42,6 @@ func TestIntUnmarshal(t *testing.T) {
 
 	for _, msg := range intMessages {
 		pbMsg := testproto.TestInt{
-			Int8:  proto.Int32(int32(msg.Int8)),
-			Int16: proto.Int32(int32(msg.Int16)),
 			Int32: proto.Int32(msg.Int32),
 			Int64: proto.Int64(msg.Int64),
 		}
@@ -64,20 +51,11 @@ func TestIntUnmarshal(t *testing.T) {
 		}
 
 		var m = struct {
-			Int8  int8
-			Int16 int16
 			Int32 int32
 			Int64 int64
 		}{}
 		if err = Unmarshal(pb, &m); err != nil {
 			t.Fatalf("unmarshal int: %v", err)
-		}
-
-		if msg.Int8 != m.Int8 {
-			t.Fatalf("unmarshal int: expected int8 %d, got %d", msg.Int8, m.Int8)
-		}
-		if msg.Int16 != m.Int16 {
-			t.Fatalf("unmarshal int: expected int16 %d, got %d", msg.Int16, m.Int16)
 		}
 		if msg.Int32 != m.Int32 {
 			t.Fatalf("unmarshal int: expected int32 %d, got %d", msg.Int32, m.Int32)
@@ -106,7 +84,6 @@ func TestBoolUnmarshal(t *testing.T) {
 		if err = Unmarshal(pb, &m); err != nil {
 			t.Fatalf("unmarshal bool: %v", err)
 		}
-
 		if msg.Bool != m.Bool {
 			t.Fatalf("unmarshal bool: expected bool %v, got %v", msg.Bool, m.Bool)
 		}
@@ -133,7 +110,6 @@ func TestBytesUnmarshal(t *testing.T) {
 		if err = Unmarshal(pb, &m); err != nil {
 			t.Fatalf("unmarshal bytes: %v", err)
 		}
-
 		if msg.String != m.String {
 			t.Fatalf("unmarshal bytes: expected string %q, got %q", msg.String, m.String)
 		}

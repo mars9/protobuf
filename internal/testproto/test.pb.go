@@ -13,6 +13,7 @@ It has these top-level messages:
 	TestInt
 	TestBool
 	TestBytes
+	TestSlice
 */
 package testproto
 
@@ -24,30 +25,14 @@ var _ = proto.Marshal
 var _ = math.Inf
 
 type TestUint struct {
-	Uint8            *uint32 `protobuf:"varint,1,req" json:"Uint8,omitempty"`
-	Uint16           *uint32 `protobuf:"varint,2,req" json:"Uint16,omitempty"`
-	Uint32           *uint32 `protobuf:"varint,3,req" json:"Uint32,omitempty"`
-	Uint64           *uint64 `protobuf:"varint,4,req" json:"Uint64,omitempty"`
+	Uint32           *uint32 `protobuf:"varint,1,req" json:"Uint32,omitempty"`
+	Uint64           *uint64 `protobuf:"varint,2,req" json:"Uint64,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
 }
 
 func (m *TestUint) Reset()         { *m = TestUint{} }
 func (m *TestUint) String() string { return proto.CompactTextString(m) }
 func (*TestUint) ProtoMessage()    {}
-
-func (m *TestUint) GetUint8() uint32 {
-	if m != nil && m.Uint8 != nil {
-		return *m.Uint8
-	}
-	return 0
-}
-
-func (m *TestUint) GetUint16() uint32 {
-	if m != nil && m.Uint16 != nil {
-		return *m.Uint16
-	}
-	return 0
-}
 
 func (m *TestUint) GetUint32() uint32 {
 	if m != nil && m.Uint32 != nil {
@@ -64,30 +49,14 @@ func (m *TestUint) GetUint64() uint64 {
 }
 
 type TestInt struct {
-	Int8             *int32 `protobuf:"varint,1,req" json:"Int8,omitempty"`
-	Int16            *int32 `protobuf:"varint,2,req" json:"Int16,omitempty"`
-	Int32            *int32 `protobuf:"varint,3,req" json:"Int32,omitempty"`
-	Int64            *int64 `protobuf:"varint,4,req" json:"Int64,omitempty"`
+	Int32            *int32 `protobuf:"varint,1,req" json:"Int32,omitempty"`
+	Int64            *int64 `protobuf:"varint,2,req" json:"Int64,omitempty"`
 	XXX_unrecognized []byte `json:"-"`
 }
 
 func (m *TestInt) Reset()         { *m = TestInt{} }
 func (m *TestInt) String() string { return proto.CompactTextString(m) }
 func (*TestInt) ProtoMessage()    {}
-
-func (m *TestInt) GetInt8() int32 {
-	if m != nil && m.Int8 != nil {
-		return *m.Int8
-	}
-	return 0
-}
-
-func (m *TestInt) GetInt16() int32 {
-	if m != nil && m.Int16 != nil {
-		return *m.Int16
-	}
-	return 0
-}
 
 func (m *TestInt) GetInt32() int32 {
 	if m != nil && m.Int32 != nil {
@@ -139,6 +108,62 @@ func (m *TestBytes) GetString_() string {
 func (m *TestBytes) GetBytes() []byte {
 	if m != nil {
 		return m.Bytes
+	}
+	return nil
+}
+
+type TestSlice struct {
+	Uint32Slice      []uint32 `protobuf:"varint,1,rep,packed" json:"Uint32Slice,omitempty"`
+	Uint64Slice      []uint64 `protobuf:"varint,2,rep,packed" json:"Uint64Slice,omitempty"`
+	Int32Slice       []int32  `protobuf:"varint,3,rep,packed" json:"Int32Slice,omitempty"`
+	Int64Slice       []int64  `protobuf:"varint,4,rep,packed" json:"Int64Slice,omitempty"`
+	BoolSlice        []bool   `protobuf:"varint,5,rep,packed" json:"BoolSlice,omitempty"`
+	StringSlice      []string `protobuf:"bytes,6,rep" json:"StringSlice,omitempty"`
+	XXX_unrecognized []byte   `json:"-"`
+}
+
+func (m *TestSlice) Reset()         { *m = TestSlice{} }
+func (m *TestSlice) String() string { return proto.CompactTextString(m) }
+func (*TestSlice) ProtoMessage()    {}
+
+func (m *TestSlice) GetUint32Slice() []uint32 {
+	if m != nil {
+		return m.Uint32Slice
+	}
+	return nil
+}
+
+func (m *TestSlice) GetUint64Slice() []uint64 {
+	if m != nil {
+		return m.Uint64Slice
+	}
+	return nil
+}
+
+func (m *TestSlice) GetInt32Slice() []int32 {
+	if m != nil {
+		return m.Int32Slice
+	}
+	return nil
+}
+
+func (m *TestSlice) GetInt64Slice() []int64 {
+	if m != nil {
+		return m.Int64Slice
+	}
+	return nil
+}
+
+func (m *TestSlice) GetBoolSlice() []bool {
+	if m != nil {
+		return m.BoolSlice
+	}
+	return nil
+}
+
+func (m *TestSlice) GetStringSlice() []string {
+	if m != nil {
+		return m.StringSlice
 	}
 	return nil
 }

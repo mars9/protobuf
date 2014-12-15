@@ -20,20 +20,18 @@ const (
 func Marshal(data []byte, v interface{}) (n int, err error) {
 	val := reflect.ValueOf(v).Elem()
 	num := val.NumField()
-
 	for i := 0; i < num; i++ {
 		field := val.Field(i)
 		if !field.CanSet() {
 			continue
 		}
 
-		// TODO: handle int and uint
 		switch field.Kind() {
-		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		case reflect.Uint32, reflect.Uint64:
 			data[n], n = byte(i+1)<<3|wireVarint, n+1
 			n += binary.PutUvarint(data[n:], field.Uint())
 
-		case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		case reflect.Int32, reflect.Int64:
 			data[n], n = byte(i+1)<<3|wireVarint, n+1
 			n += binary.PutUvarint(data[n:], uint64(field.Int()))
 
@@ -64,7 +62,15 @@ func Marshal(data []byte, v interface{}) (n int, err error) {
 // TODO
 func marshalSlice(data []byte, key int, val reflect.Value) (n int) {
 	switch val.Type().Elem().Kind() {
-	case reflect.Uint8:
+	case reflect.Uint32, reflect.Uint64:
+
+	case reflect.Int32, reflect.Int64:
+
+	case reflect.Bool:
+
+	case reflect.String:
+
+	case reflect.Uint8: // byte slice
 		data[n], n = byte(key)<<3|wireBytes, n+1
 		b := val.Bytes()
 		n += binary.PutUvarint(data[n:], uint64(len(b)))
@@ -77,7 +83,6 @@ func marshalSlice(data []byte, key int, val reflect.Value) (n int) {
 func Size(v interface{}) (n int, err error) {
 	val := reflect.ValueOf(v).Elem()
 	num := val.NumField()
-	n += num
 	for i := 0; i < num; i++ {
 		field := val.Field(i)
 		if !field.CanSet() {
@@ -85,17 +90,17 @@ func Size(v interface{}) (n int, err error) {
 		}
 
 		switch field.Kind() {
-		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			n += uvarintSize(field.Uint())
-		case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			n += uvarintSize(uint64(field.Int()))
+		case reflect.Uint32, reflect.Uint64:
+			n += 1 + uvarintSize(field.Uint())
+		case reflect.Int32, reflect.Int64:
+			n += 1 + uvarintSize(uint64(field.Int()))
 		case reflect.Bool:
-			n++
+			n += 2
 		case reflect.String:
 			m := len(field.String())
-			n += m + uvarintSize(uint64(m))
+			n += 1 + m + uvarintSize(uint64(m))
 		case reflect.Slice:
-			n += sliceSize(field)
+			n += sliceSize(field, field.Len())
 		default:
 			errors.New("unsupported type: " + field.Kind().String())
 		}
@@ -103,12 +108,37 @@ func Size(v interface{}) (n int, err error) {
 	return n, err
 }
 
-func sliceSize(val reflect.Value) (n int) {
-	switch val.Type().Elem().Kind() {
-	case reflect.Uint8:
+func sliceSize(val reflect.Value, vlen int) (n int) {
+	elem := val.Type().Elem().Kind()
+	if elem == reflect.Uint8 { // byte slice
 		m := len(val.Bytes())
-		n += m + uvarintSize(uint64(m))
+		n += 1 + m + uvarintSize(uint64(m))
+		return n
 	}
+	if vlen == 0 {
+		return 0
+	}
+
+	switch val.Type().Elem().Kind() {
+	case reflect.Uint32, reflect.Uint64:
+		for i := 0; i < vlen; i++ {
+			n += uvarintSize(val.Index(i).Uint())
+		}
+	case reflect.Int32, reflect.Int64:
+		for i := 0; i < vlen; i++ {
+			n += uvarintSize(uint64(val.Index(i).Int()))
+		}
+	case reflect.Bool:
+		for i := 0; i < vlen; i++ {
+			n++
+		}
+		// TODO
+		//case reflect.String:
+		//	for i := 0; i < vlen; i++ {
+		//		n += uvarintSize(uint64(len(val.Index(i).String())))
+		//	}
+	}
+	n += 1 + uvarintSize(uint64(n))
 	return n
 }
 
