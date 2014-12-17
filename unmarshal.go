@@ -6,11 +6,7 @@ import (
 	"reflect"
 )
 
-// Unmarshal parses the protocol buffer representation in data and places
-// the decoded result in v. If the struct underlying v does not match the
-// data, the results can be unpredictable.
-func Unmarshal(data []byte, v interface{}) (err error) {
-	val := reflect.ValueOf(v).Elem()
+func unmarshal(data []byte, val reflect.Value) (err error) {
 	num := val.NumField()
 	var field reflect.Value
 
@@ -38,7 +34,6 @@ func Unmarshal(data []byte, v interface{}) (err error) {
 			if err = putNum(field, v); err != nil {
 				return err
 			}
-
 		case wireBytes:
 			v, n := binary.Uvarint(data)
 			if n <= 0 {
@@ -49,14 +44,26 @@ func Unmarshal(data []byte, v interface{}) (err error) {
 				return err
 			}
 			data = data[v:]
-
-		case wireFixed64:
-			// TODO
-		case wireFixed32:
-			// TODO
 		}
 	}
 	return err
+}
+
+// Unmarshal parses the protocol buffer representation in data and places
+// the decoded result in v. If the struct underlying v does not match the
+// data, the results can be unpredictable.
+func Unmarshal(data []byte, v interface{}) (err error) {
+	defer func() {
+		if recover() != nil {
+			err = errors.New("malformed packet")
+		}
+	}()
+
+	val := reflect.ValueOf(v)
+	if val.Kind() != reflect.Ptr {
+		return errors.New("v must be a pointer to a struct")
+	}
+	return unmarshal(data, val.Elem())
 }
 
 func putNum(field reflect.Value, v uint64) error {

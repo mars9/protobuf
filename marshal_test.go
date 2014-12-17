@@ -50,7 +50,7 @@ var sliceMessages = []struct {
 	Int32Slice  []int32
 	Int64Slice  []int64
 	BoolSlice   []bool
-	//StringSlice []string
+	StringSlice []string
 }{
 	{Uint32Slice: []uint32{0, 0, 0}},
 	{Uint32Slice: []uint32{1, 1, 1}},
@@ -74,8 +74,8 @@ var sliceMessages = []struct {
 
 	{BoolSlice: []bool{true, false}},
 
-	//{StringSlice: []string{"", "", ""}},
-	//{StringSlice: []string{"string", "string", "string"}},
+	{StringSlice: []string{"", "", ""}},
+	{StringSlice: []string{"string", "string", "string"}},
 }
 
 func TestUintMarshal(t *testing.T) {
@@ -225,16 +225,14 @@ func TestSliceMarshal(t *testing.T) {
 		if err != nil {
 			t.Fatalf("size slice: %v", err)
 		}
-		/*
-			b := make([]byte, size)
-			n, err := Marshal(b, &msg)
-			if err != nil {
-				t.Fatalf("marshal slice: %v", err)
-			}
-			if n != size {
-				t.Fatalf("marshal slice: expected size %d, got %d", size, n)
-			}
-		*/
+		b := make([]byte, size)
+		n, err := Marshal(b, &msg)
+		if err != nil {
+			t.Fatalf("marshal slice: %v", err)
+		}
+		if n != size {
+			t.Fatalf("marshal slice: expected size %d, got %d", size, n)
+		}
 
 		pbMsg := testproto.TestSlice{
 			Uint32Slice: msg.Uint32Slice,
@@ -242,7 +240,7 @@ func TestSliceMarshal(t *testing.T) {
 			Int32Slice:  msg.Int32Slice,
 			Int64Slice:  msg.Int64Slice,
 			BoolSlice:   msg.BoolSlice,
-			//StringSlice: msg.StringSlice,
+			StringSlice: msg.StringSlice,
 		}
 		pb, err := proto.Marshal(&pbMsg)
 		if err != nil {
@@ -251,10 +249,8 @@ func TestSliceMarshal(t *testing.T) {
 		if size != len(pb) {
 			t.Fatalf("marshal slice: expected size %d, got %d", len(pb), size)
 		}
-		/*
-			if bytes.Compare(b, pb) != 0 {
-				t.Fatalf("marshal bytes: expected bytes %q, got %q", pb, b)
-			}
-		*/
+		if bytes.Compare(b, pb) != 0 {
+			t.Fatalf("marshal bytes: expected bytes %q, got %q", pb, b)
+		}
 	}
 }

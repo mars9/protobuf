@@ -9,16 +9,27 @@ import (
 )
 
 const (
-	wireVarint  = 0
-	wireFixed64 = 1
-	wireBytes   = 2
-	wireFixed32 = 5
+	wireVarint = 0
+	// TODO: wireFixed64 = 1
+	wireBytes = 2
+	// TODO: wireFixed32 = 5
 )
 
-// Marshal returns the protocl buffer encoding of v. The struct
-// underlying v must be a pointer.
+// Marshal returns the protocl buffer encoding of v. The struct underlying
+// v must be a pointer.
+//
+// Marshal currently encodes all visible field, which does not allow
+// distinction between 'required' and 'optional' fields. Marshal returns
+// an error if a struct field type is not supported.
 func Marshal(data []byte, v interface{}) (n int, err error) {
-	val := reflect.ValueOf(v).Elem()
+	val := reflect.ValueOf(v)
+	if val.Kind() != reflect.Ptr {
+		return n, errors.New("v must be a pointer to a struct")
+	}
+	return marshal(data, val.Elem())
+}
+
+func marshal(data []byte, val reflect.Value) (n int, err error) {
 	num := val.NumField()
 	for i := 0; i < num; i++ {
 		field := val.Field(i)
@@ -27,61 +38,96 @@ func Marshal(data []byte, v interface{}) (n int, err error) {
 		}
 
 		switch field.Kind() {
-		case reflect.Uint32, reflect.Uint64:
-			data[n], n = byte(i+1)<<3|wireVarint, n+1
-			n += binary.PutUvarint(data[n:], field.Uint())
-
 		case reflect.Int32, reflect.Int64:
-			data[n], n = byte(i+1)<<3|wireVarint, n+1
-			n += binary.PutUvarint(data[n:], uint64(field.Int()))
-
+			n += marshalUint(data[n:], i+1, uint64(field.Int()))
+		case reflect.Uint32, reflect.Uint64:
+			n += marshalUint(data[n:], i+1, field.Uint())
 		case reflect.Bool:
-			data[n], n = byte(i+1)<<3|wireVarint, n+1
-			if field.Bool() {
-				data[n], n = 1, n+1
-			} else {
-				data[n], n = 0, n+1
-			}
-
+			n += marshalBool(data[n:], i+1, field.Bool())
 		case reflect.String:
-			data[n], n = byte(i+1)<<3|wireBytes, n+1
-			s := field.String()
-			n += binary.PutUvarint(data[n:], uint64(len(s)))
-			n += copy(data[n:], s)
-
+			n += marshalString(data[n:], i+1, field.String())
 		case reflect.Slice:
-			n += marshalSlice(data[n:], i+1, field)
-
+			m, err := marshalSlice(data[n:], i+1, field)
+			n += m
+			if err != nil {
+				return n, err
+			}
 		default:
-			errors.New("unsupported type: " + field.Kind().String())
+			return n, errors.New("invalid type: " + field.Kind().String())
 		}
 	}
 	return n, err
 }
 
-// TODO
-func marshalSlice(data []byte, key int, val reflect.Value) (n int) {
+// TODO: [][]byte
+func marshalSlice(data []byte, key int, val reflect.Value) (n int, err error) {
+	vlen := val.Len()
 	switch val.Type().Elem().Kind() {
-	case reflect.Uint32, reflect.Uint64:
-
 	case reflect.Int32, reflect.Int64:
-
+		for i := 0; i < vlen; i++ {
+			n += marshalUint(data[n:], key, uint64(val.Index(i).Int()))
+		}
+	case reflect.Uint32, reflect.Uint64:
+		for i := 0; i < vlen; i++ {
+			n += marshalUint(data[n:], key, val.Index(i).Uint())
+		}
 	case reflect.Bool:
-
+		for i := 0; i < vlen; i++ {
+			n += marshalBool(data[n:], key, val.Index(i).Bool())
+		}
 	case reflect.String:
-
+		for i := 0; i < vlen; i++ {
+			n += marshalString(data[n:], key, val.Index(i).String())
+		}
 	case reflect.Uint8: // byte slice
-		data[n], n = byte(key)<<3|wireBytes, n+1
-		b := val.Bytes()
-		n += binary.PutUvarint(data[n:], uint64(len(b)))
-		n += copy(data[n:], b)
+		n += marshalBytes(data[n:], key, val.Bytes())
+	default:
+		return n, errors.New("invalid type: " + val.Kind().String())
+	}
+	return n, err
+}
+
+func marshalUint(data []byte, key int, v uint64) (n int) {
+	data[n], n = byte(key)<<3|wireVarint, n+1
+	n += binary.PutUvarint(data[n:], v)
+	return n
+}
+
+func marshalBool(data []byte, key int, v bool) (n int) {
+	data[n], n = byte(key)<<3|wireVarint, n+1
+	if v {
+		data[n], n = 1, n+1
+	} else {
+		data[n], n = 0, n+1
 	}
 	return n
 }
 
-// Size returns the encoded protocol buffer size.
+func marshalString(data []byte, key int, v string) (n int) {
+	data[n], n = byte(key)<<3|wireBytes, n+1
+	n += binary.PutUvarint(data[n:], uint64(len(v)))
+	n += copy(data[n:], v)
+	return n
+}
+
+func marshalBytes(data []byte, key int, v []byte) (n int) {
+	data[n], n = byte(key)<<3|wireBytes, n+1
+	n += binary.PutUvarint(data[n:], uint64(len(v)))
+	n += copy(data[n:], v)
+	return n
+}
+
+// Size returns the encoded protocol buffer size. The struct underlying v
+// must be a pointer.
 func Size(v interface{}) (n int, err error) {
-	val := reflect.ValueOf(v).Elem()
+	val := reflect.ValueOf(v)
+	if val.Kind() != reflect.Ptr {
+		return n, errors.New("v must be a pointer to a struct")
+	}
+	return size(val.Elem())
+}
+
+func size(val reflect.Value) (n int, err error) {
 	num := val.NumField()
 	for i := 0; i < num; i++ {
 		field := val.Field(i)
@@ -100,46 +146,44 @@ func Size(v interface{}) (n int, err error) {
 			m := len(field.String())
 			n += 1 + m + uvarintSize(uint64(m))
 		case reflect.Slice:
-			n += sliceSize(field, field.Len())
+			m, err := sliceSize(field, field.Len())
+			n += m
+			if err != nil {
+				return n, err
+			}
 		default:
-			errors.New("unsupported type: " + field.Kind().String())
+			return n, errors.New("invalid type: " + field.Kind().String())
 		}
 	}
 	return n, err
 }
 
-func sliceSize(val reflect.Value, vlen int) (n int) {
-	elem := val.Type().Elem().Kind()
-	if elem == reflect.Uint8 { // byte slice
-		m := len(val.Bytes())
-		n += 1 + m + uvarintSize(uint64(m))
-		return n
-	}
-	if vlen == 0 {
-		return 0
-	}
-
+func sliceSize(val reflect.Value, vlen int) (n int, err error) {
 	switch val.Type().Elem().Kind() {
 	case reflect.Uint32, reflect.Uint64:
 		for i := 0; i < vlen; i++ {
-			n += uvarintSize(val.Index(i).Uint())
+			n += 1 + uvarintSize(val.Index(i).Uint())
 		}
 	case reflect.Int32, reflect.Int64:
 		for i := 0; i < vlen; i++ {
-			n += uvarintSize(uint64(val.Index(i).Int()))
+			n += 1 + uvarintSize(uint64(val.Index(i).Int()))
 		}
 	case reflect.Bool:
 		for i := 0; i < vlen; i++ {
-			n++
+			n += 2
 		}
-		// TODO
-		//case reflect.String:
-		//	for i := 0; i < vlen; i++ {
-		//		n += uvarintSize(uint64(len(val.Index(i).String())))
-		//	}
+	case reflect.String:
+		for i := 0; i < vlen; i++ {
+			m := len(val.Index(i).String())
+			n += 1 + m + uvarintSize(uint64(m))
+		}
+	case reflect.Uint8: // byte slice
+		m := len(val.Bytes())
+		n += 1 + m + uvarintSize(uint64(m))
+	default:
+		return n, errors.New("invalid type: " + val.Kind().String())
 	}
-	n += 1 + uvarintSize(uint64(n))
-	return n
+	return n, err
 }
 
 func uvarintSize(v uint64) (n int) {
