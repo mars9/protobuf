@@ -113,12 +113,13 @@ func (m *TestBytes) GetBytes() []byte {
 }
 
 type TestSlice struct {
-	Uint32Slice      []uint32 `protobuf:"varint,1,rep,packed" json:"Uint32Slice,omitempty"`
-	Uint64Slice      []uint64 `protobuf:"varint,2,rep,packed" json:"Uint64Slice,omitempty"`
-	Int32Slice       []int32  `protobuf:"varint,3,rep,packed" json:"Int32Slice,omitempty"`
-	Int64Slice       []int64  `protobuf:"varint,4,rep,packed" json:"Int64Slice,omitempty"`
-	BoolSlice        []bool   `protobuf:"varint,5,rep,packed" json:"BoolSlice,omitempty"`
+	Uint32Slice      []uint32 `protobuf:"varint,1,rep" json:"Uint32Slice,omitempty"`
+	Uint64Slice      []uint64 `protobuf:"varint,2,rep" json:"Uint64Slice,omitempty"`
+	Int32Slice       []int32  `protobuf:"varint,3,rep" json:"Int32Slice,omitempty"`
+	Int64Slice       []int64  `protobuf:"varint,4,rep" json:"Int64Slice,omitempty"`
+	BoolSlice        []bool   `protobuf:"varint,5,rep" json:"BoolSlice,omitempty"`
 	StringSlice      []string `protobuf:"bytes,6,rep" json:"StringSlice,omitempty"`
+	BytesSlice       [][]byte `protobuf:"bytes,7,rep" json:"BytesSlice,omitempty"`
 	XXX_unrecognized []byte   `json:"-"`
 }
 
@@ -164,6 +165,13 @@ func (m *TestSlice) GetBoolSlice() []bool {
 func (m *TestSlice) GetStringSlice() []string {
 	if m != nil {
 		return m.StringSlice
+	}
+	return nil
+}
+
+func (m *TestSlice) GetBytesSlice() [][]byte {
+	if m != nil {
+		return m.BytesSlice
 	}
 	return nil
 }

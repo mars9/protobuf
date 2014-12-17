@@ -20,10 +20,11 @@ message TestBytes {
 }
 
 message TestSlice {
-	repeated uint32 Uint32Slice  = 1 [packed=true];
-	repeated uint64 Uint64Slice  = 2 [packed=true];
-	repeated int32 Int32Slice    = 3 [packed=true];
-	repeated int64 Int64Slice    = 4 [packed=true];
-	repeated bool BoolSlice      = 5 [packed=true];
+	repeated uint32 Uint32Slice  = 1;
+	repeated uint64 Uint64Slice  = 2;
+	repeated int32 Int32Slice    = 3;
+	repeated int64 Int64Slice    = 4;
+	repeated bool BoolSlice      = 5;
 	repeated string StringSlice  = 6;
+	repeated bytes BytesSlice    = 7;
 }
