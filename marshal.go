@@ -20,7 +20,8 @@ const (
 //
 // Marshal currently encodes all visible field, which does not allow
 // distinction between 'required' and 'optional' fields. Marshal returns
-// an error if a struct field type is not supported.
+// an error if a struct field type is not supported. If the buffer is too
+// small, Marshal will panic.
 func Marshal(data []byte, v interface{}) (n int, err error) {
 	val := reflect.ValueOf(v)
 	if val.Kind() != reflect.Ptr {

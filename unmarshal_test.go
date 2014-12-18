@@ -2,6 +2,7 @@ package protobuf
 
 import (
 	"bytes"
+	"reflect"
 	"testing"
 
 	"github.com/golang/protobuf/proto"
@@ -115,6 +116,56 @@ func TestBytesUnmarshal(t *testing.T) {
 		}
 		if bytes.Compare(msg.Bytes, m.Bytes) != 0 {
 			t.Fatalf("unmarshal bytes: expected bytes %q, got %q", msg.Bytes, m.Bytes)
+		}
+	}
+}
+
+func TestSliceUnmarshal(t *testing.T) {
+	t.Parallel()
+
+	for _, msg := range sliceMessages {
+		pbMsg := testproto.TestSlice{
+			Uint32Slice: msg.Uint32Slice,
+			Uint64Slice: msg.Uint64Slice,
+			Int32Slice:  msg.Int32Slice,
+			Int64Slice:  msg.Int64Slice,
+			BoolSlice:   msg.BoolSlice,
+			StringSlice: msg.StringSlice,
+		}
+		pb, err := proto.Marshal(&pbMsg)
+		if err != nil {
+			t.Fatalf("marshal protobuf: %v", err)
+		}
+
+		var m = struct {
+			Uint32Slice []uint32
+			Uint64Slice []uint64
+			Int32Slice  []int32
+			Int64Slice  []int64
+			BoolSlice   []bool
+			StringSlice []string
+		}{}
+		if err = Unmarshal(pb, &m); err != nil {
+			t.Fatalf("unmarshal slice: %v", err)
+		}
+
+		if !reflect.DeepEqual(msg.Uint32Slice, m.Uint32Slice) {
+			t.Fatalf("unmashal uint32 slice: expected %#v, got %#v", msg.Uint32Slice, m.Uint32Slice)
+		}
+		if !reflect.DeepEqual(msg.Uint64Slice, m.Uint64Slice) {
+			t.Fatalf("unmashal uint64 slice: expected %#v, got %#v", msg.Uint64Slice, m.Uint64Slice)
+		}
+		if !reflect.DeepEqual(msg.Int32Slice, m.Int32Slice) {
+			t.Fatalf("unmashal int32 slice: expected %#v, got %#v", msg.Int32Slice, m.Int32Slice)
+		}
+		if !reflect.DeepEqual(msg.Int64Slice, m.Int64Slice) {
+			t.Fatalf("unmashal int64 slice: expected %#v, got %#v", msg.Int64Slice, m.Int64Slice)
+		}
+		if !reflect.DeepEqual(msg.BoolSlice, m.BoolSlice) {
+			t.Fatalf("unmashal bool slice: expected %#v, got %#v", msg.BoolSlice, m.BoolSlice)
+		}
+		if !reflect.DeepEqual(msg.StringSlice, m.StringSlice) {
+			t.Fatalf("unmashal string slice: expected %#v, got %#v", msg.StringSlice, m.StringSlice)
 		}
 	}
 }
