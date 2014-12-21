@@ -15,6 +15,7 @@ It has these top-level messages:
 	TestBool
 	TestBytes
 	TestSlice
+	TestByteSlice
 	TestFixedSlice
 	TestEmbedded
 */
@@ -146,7 +147,6 @@ type TestSlice struct {
 	Int64Slice       []int64  `protobuf:"varint,4,rep" json:"Int64Slice,omitempty"`
 	BoolSlice        []bool   `protobuf:"varint,5,rep" json:"BoolSlice,omitempty"`
 	StringSlice      []string `protobuf:"bytes,6,rep" json:"StringSlice,omitempty"`
-	BytesSlice       [][]byte `protobuf:"bytes,7,rep" json:"BytesSlice,omitempty"`
 	XXX_unrecognized []byte   `json:"-"`
 }
 
@@ -196,9 +196,18 @@ func (m *TestSlice) GetStringSlice() []string {
 	return nil
 }
 
-func (m *TestSlice) GetBytesSlice() [][]byte {
+type TestByteSlice struct {
+	ByteSlice        [][]byte `protobuf:"bytes,1,rep" json:"ByteSlice,omitempty"`
+	XXX_unrecognized []byte   `json:"-"`
+}
+
+func (m *TestByteSlice) Reset()         { *m = TestByteSlice{} }
+func (m *TestByteSlice) String() string { return proto.CompactTextString(m) }
+func (*TestByteSlice) ProtoMessage()    {}
+
+func (m *TestByteSlice) GetByteSlice() [][]byte {
 	if m != nil {
-		return m.BytesSlice
+		return m.ByteSlice
 	}
 	return nil
 }

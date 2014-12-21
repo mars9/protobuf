@@ -120,6 +120,30 @@ func TestBytesUnmarshal(t *testing.T) {
 	}
 }
 
+func TestByteSliceUnmarshal(t *testing.T) {
+	t.Parallel()
+
+	for _, msg := range byteSliceMessages {
+		pbMsg := testproto.TestByteSlice{
+			ByteSlice: msg.ByteSlice,
+		}
+		pb, err := proto.Marshal(&pbMsg)
+		if err != nil {
+			t.Fatalf("marshal protobuf: %v", err)
+		}
+
+		var m = struct {
+			ByteSlice [][]byte
+		}{}
+		if err = Unmarshal(pb, &m); err != nil {
+			t.Fatalf("unmarshal bytes slice: %v", err)
+		}
+		if !reflect.DeepEqual(msg.ByteSlice, m.ByteSlice) {
+			t.Fatalf("unmarshal bytes slice: expected %#v, got %#v", msg.ByteSlice, m.ByteSlice)
+		}
+	}
+}
+
 func TestSliceUnmarshal(t *testing.T) {
 	t.Parallel()
 

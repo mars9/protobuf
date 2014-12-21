@@ -31,7 +31,10 @@ message TestSlice {
 	repeated int64 Int64Slice    = 4;
 	repeated bool BoolSlice      = 5;
 	repeated string StringSlice  = 6;
-	repeated bytes BytesSlice    = 7;
+}
+
+message TestByteSlice {
+	repeated bytes ByteSlice = 1;
 }
 
 message TestFixedSlice {

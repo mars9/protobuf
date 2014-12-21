@@ -214,8 +214,15 @@ func unmarshalBytes(val reflect.Value, b []byte) error {
 			elem := reflect.New(vtype).Elem()
 			elem.SetString(string(b))
 			val.Set(reflect.Append(val, elem))
-		case reflect.Uint8: // byte slice
+		case reflect.Uint8: // []byte
 			val.SetBytes(b)
+		case reflect.Slice: // [][]byte
+			vtype := val.Type().Elem()
+			elem := reflect.New(vtype).Elem()
+			if err := unmarshalBytes(elem, b); err != nil {
+				return err
+			}
+			val.Set(reflect.Append(val, elem))
 		}
 	case reflect.Struct:
 		return unmarshal(b, val)

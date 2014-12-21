@@ -98,7 +98,6 @@ func marshalStruct(data []byte, key int, val reflect.Value) (n int, err error) {
 	return n, err
 }
 
-// TODO: [][]byte
 func marshalSlice(data []byte, key int, val reflect.Value) (n int, err error) {
 	vlen := val.Len()
 	switch val.Type().Elem().Kind() {
@@ -130,8 +129,19 @@ func marshalSlice(data []byte, key int, val reflect.Value) (n int, err error) {
 		for i := 0; i < vlen; i++ {
 			n += marshalString(data[n:], key, val.Index(i).String())
 		}
-	case reflect.Uint8: // byte slice
+	case reflect.Uint8: // []byte
 		n += marshalBytes(data[n:], key, val.Bytes())
+	case reflect.Slice:
+		for i := 0; i < vlen; i++ {
+			v := val.Index(i)
+			if v.Type().Elem().Kind() == reflect.Uint8 { // [][]byte
+				m, err := marshalSlice(data[n:], key, v)
+				if err != nil {
+					return n + m, err
+				}
+				n += m
+			}
+		}
 	}
 	return n, err
 }
@@ -260,9 +270,20 @@ func sliceSize(val reflect.Value, vlen int) (n int, err error) {
 			m := len(val.Index(i).String())
 			n += 1 + m + uvarintSize(uint64(m))
 		}
-	case reflect.Uint8: // byte slice
+	case reflect.Uint8: // []byte
 		m := len(val.Bytes())
 		n += 1 + m + uvarintSize(uint64(m))
+	case reflect.Slice:
+		for i := 0; i < vlen; i++ {
+			v := val.Index(i)
+			if v.Type().Elem().Kind() == reflect.Uint8 { // [][]byte
+				m, err := sliceSize(v, v.Len())
+				if err != nil {
+					return n + m, err
+				}
+				n += m
+			}
+		}
 	}
 	return n, err
 }

@@ -62,7 +62,6 @@ var sliceMessages = []struct {
 	Int64Slice  []int64
 	BoolSlice   []bool
 	StringSlice []string
-	//ByteSlice   [][]byte // TODO
 }{
 	{Uint32Slice: []uint32{0, 0, 0}},
 	{Uint32Slice: []uint32{1, 1, 1}},
@@ -88,6 +87,13 @@ var sliceMessages = []struct {
 
 	{StringSlice: []string{"", "", ""}},
 	{StringSlice: []string{"string", "string", "string"}},
+}
+
+var byteSliceMessages = []struct {
+	ByteSlice [][]byte
+}{
+	{ByteSlice: [][]byte{[]byte(""), []byte(""), []byte("")}},
+	{ByteSlice: [][]byte{[]byte("bytes"), []byte("bytes"), []byte("bytes")}},
 }
 
 var fixedSliceMessages = []struct {
@@ -292,6 +298,39 @@ func TestBytesMarshal(t *testing.T) {
 		}
 		if bytes.Compare(b, pb) != 0 {
 			t.Fatalf("marshal bytes: expected bytes %q, got %q", pb, b)
+		}
+	}
+}
+
+func TestByteSliceMarshal(t *testing.T) {
+	t.Parallel()
+
+	for _, msg := range byteSliceMessages {
+		size, err := Size(&msg)
+		if err != nil {
+			t.Fatalf("size bytes slice: %v", err)
+		}
+		b := make([]byte, size)
+		n, err := Marshal(b, &msg)
+		if err != nil {
+			t.Fatalf("marshal bytes slice: %v", err)
+		}
+		if n != size {
+			t.Fatalf("marshal bytes slice: expected size %d, got %d", size, n)
+		}
+
+		pbMsg := testproto.TestByteSlice{
+			ByteSlice: msg.ByteSlice,
+		}
+		pb, err := proto.Marshal(&pbMsg)
+		if err != nil {
+			t.Fatalf("marshal protobuf: %v", err)
+		}
+		if size != len(pb) {
+			t.Fatalf("marshal bytes slice: expected size %d, got %d", len(pb), size)
+		}
+		if bytes.Compare(b, pb) != 0 {
+			t.Fatalf("marshal bytes slice: expected bytes %q, got %q", pb, b)
 		}
 	}
 }
