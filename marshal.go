@@ -132,8 +132,6 @@ func marshalSlice(data []byte, key int, val reflect.Value) (n int, err error) {
 		}
 	case reflect.Uint8: // byte slice
 		n += marshalBytes(data[n:], key, val.Bytes())
-	default:
-		return n, errors.New("invalid type: " + val.Kind().String())
 	}
 	return n, err
 }
@@ -265,8 +263,6 @@ func sliceSize(val reflect.Value, vlen int) (n int, err error) {
 	case reflect.Uint8: // byte slice
 		m := len(val.Bytes())
 		n += 1 + m + uvarintSize(uint64(m))
-	default:
-		return n, errors.New("invalid type: " + val.Kind().String())
 	}
 	return n, err
 }
