@@ -16,6 +16,7 @@ It has these top-level messages:
 	TestBytes
 	TestSlice
 	TestFixedSlice
+	TestEmbedded
 */
 package testproto
 
@@ -224,6 +225,54 @@ func (m *TestFixedSlice) GetFloat64Slice() []float64 {
 		return m.Float64Slice
 	}
 	return nil
+}
+
+type TestEmbedded struct {
+	Embedded1        *TestEmbedded_Embedded `protobuf:"bytes,1,req,name=embedded1" json:"embedded1,omitempty"`
+	Embedded2        *TestEmbedded_Embedded `protobuf:"bytes,2,req,name=embedded2" json:"embedded2,omitempty"`
+	XXX_unrecognized []byte                 `json:"-"`
+}
+
+func (m *TestEmbedded) Reset()         { *m = TestEmbedded{} }
+func (m *TestEmbedded) String() string { return proto.CompactTextString(m) }
+func (*TestEmbedded) ProtoMessage()    {}
+
+func (m *TestEmbedded) GetEmbedded1() *TestEmbedded_Embedded {
+	if m != nil {
+		return m.Embedded1
+	}
+	return nil
+}
+
+func (m *TestEmbedded) GetEmbedded2() *TestEmbedded_Embedded {
+	if m != nil {
+		return m.Embedded2
+	}
+	return nil
+}
+
+type TestEmbedded_Embedded struct {
+	Uint32           *uint32 `protobuf:"varint,1,req" json:"Uint32,omitempty"`
+	Uint64           *uint64 `protobuf:"varint,2,req" json:"Uint64,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *TestEmbedded_Embedded) Reset()         { *m = TestEmbedded_Embedded{} }
+func (m *TestEmbedded_Embedded) String() string { return proto.CompactTextString(m) }
+func (*TestEmbedded_Embedded) ProtoMessage()    {}
+
+func (m *TestEmbedded_Embedded) GetUint32() uint32 {
+	if m != nil && m.Uint32 != nil {
+		return *m.Uint32
+	}
+	return 0
+}
+
+func (m *TestEmbedded_Embedded) GetUint64() uint64 {
+	if m != nil && m.Uint64 != nil {
+		return *m.Uint64
+	}
+	return 0
 }
 
 func init() {

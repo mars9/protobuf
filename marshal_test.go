@@ -107,6 +107,21 @@ var fixedSliceMessages = []struct {
 	{Float64Slice: []float64{math.SmallestNonzeroFloat64, math.SmallestNonzeroFloat64}},
 }
 
+type embeddedMessage struct {
+	Uint32 uint32
+	Uint64 uint64
+}
+
+var embeddedMessages = []struct {
+	Embedded1 embeddedMessage
+	Embedded2 *embeddedMessage
+}{
+	{
+		Embedded1: embeddedMessage{Uint32: math.MaxUint32, Uint64: math.MaxUint64},
+		Embedded2: &embeddedMessage{Uint32: math.MaxUint32, Uint64: math.MaxUint64},
+	},
+}
+
 func TestUintMarshal(t *testing.T) {
 	t.Parallel()
 
@@ -349,6 +364,46 @@ func TestFixedSliceMarshal(t *testing.T) {
 		}
 		if bytes.Compare(b, pb) != 0 {
 			t.Fatalf("marshal fixed slice: expected bytes %q, got %q", pb, b)
+		}
+	}
+}
+
+func TestEmbeddedMarshal(t *testing.T) {
+	t.Parallel()
+
+	for _, msg := range embeddedMessages {
+		size, err := Size(&msg)
+		if err != nil {
+			t.Fatalf("size embedded: %v", err)
+		}
+		b := make([]byte, size)
+		n, err := Marshal(b, &msg)
+		if err != nil {
+			t.Fatalf("marshal embedded: %v", err)
+		}
+		if n != size {
+			t.Fatalf("marshal embedded: expected size %d, got %d", size, n)
+		}
+
+		pbMsg := testproto.TestEmbedded{
+			Embedded1: &testproto.TestEmbedded_Embedded{
+				Uint32: &msg.Embedded1.Uint32,
+				Uint64: &msg.Embedded1.Uint64,
+			},
+			Embedded2: &testproto.TestEmbedded_Embedded{
+				Uint32: &msg.Embedded2.Uint32,
+				Uint64: &msg.Embedded2.Uint64,
+			},
+		}
+		pb, err := proto.Marshal(&pbMsg)
+		if err != nil {
+			t.Fatalf("marshal protobuf: %v", err)
+		}
+		if size != len(pb) {
+			t.Fatalf("marshal embedded: expected size %d, got %d", len(pb), size)
+		}
+		if bytes.Compare(b, pb) != 0 {
+			t.Fatalf("marshal embedded: expected bytes %q, got %q", pb, b)
 		}
 	}
 }

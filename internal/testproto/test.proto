@@ -38,3 +38,12 @@ message TestFixedSlice {
 	repeated float Float32Slice  = 1;
 	repeated double Float64Slice = 2;
 }
+
+message TestEmbedded {
+	message Embedded {
+		required uint32 Uint32 = 1;
+		required uint64 Uint64 = 2;
+	}
+	required Embedded embedded1 = 1;
+	required Embedded embedded2 = 2;
+}

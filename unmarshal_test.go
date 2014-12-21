@@ -150,22 +150,22 @@ func TestSliceUnmarshal(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(msg.Uint32Slice, m.Uint32Slice) {
-			t.Fatalf("unmashal uint32 slice: expected %#v, got %#v", msg.Uint32Slice, m.Uint32Slice)
+			t.Fatalf("unmarshal uint32 slice: expected %#v, got %#v", msg.Uint32Slice, m.Uint32Slice)
 		}
 		if !reflect.DeepEqual(msg.Uint64Slice, m.Uint64Slice) {
-			t.Fatalf("unmashal uint64 slice: expected %#v, got %#v", msg.Uint64Slice, m.Uint64Slice)
+			t.Fatalf("unmarshal uint64 slice: expected %#v, got %#v", msg.Uint64Slice, m.Uint64Slice)
 		}
 		if !reflect.DeepEqual(msg.Int32Slice, m.Int32Slice) {
-			t.Fatalf("unmashal int32 slice: expected %#v, got %#v", msg.Int32Slice, m.Int32Slice)
+			t.Fatalf("unmarshal int32 slice: expected %#v, got %#v", msg.Int32Slice, m.Int32Slice)
 		}
 		if !reflect.DeepEqual(msg.Int64Slice, m.Int64Slice) {
-			t.Fatalf("unmashal int64 slice: expected %#v, got %#v", msg.Int64Slice, m.Int64Slice)
+			t.Fatalf("unmarshal int64 slice: expected %#v, got %#v", msg.Int64Slice, m.Int64Slice)
 		}
 		if !reflect.DeepEqual(msg.BoolSlice, m.BoolSlice) {
-			t.Fatalf("unmashal bool slice: expected %#v, got %#v", msg.BoolSlice, m.BoolSlice)
+			t.Fatalf("unmarshal bool slice: expected %#v, got %#v", msg.BoolSlice, m.BoolSlice)
 		}
 		if !reflect.DeepEqual(msg.StringSlice, m.StringSlice) {
-			t.Fatalf("unmashal string slice: expected %#v, got %#v", msg.StringSlice, m.StringSlice)
+			t.Fatalf("unmarshal string slice: expected %#v, got %#v", msg.StringSlice, m.StringSlice)
 		}
 	}
 }
@@ -192,10 +192,51 @@ func TestFixedSliceUnmarshal(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(msg.Float32Slice, m.Float32Slice) {
-			t.Fatalf("unmashal float32 slice: expected %#v, got %#v", msg.Float32Slice, m.Float32Slice)
+			t.Fatalf("unmarshal float32 slice: expected %#v, got %#v", msg.Float32Slice, m.Float32Slice)
 		}
 		if !reflect.DeepEqual(msg.Float64Slice, m.Float64Slice) {
-			t.Fatalf("unmashal float64 slice: expected %#v, got %#v", msg.Float64Slice, m.Float64Slice)
+			t.Fatalf("unmarshal float64 slice: expected %#v, got %#v", msg.Float64Slice, m.Float64Slice)
+		}
+	}
+}
+
+func TestEmbeddedUnmarshal(t *testing.T) {
+	t.Parallel()
+
+	for _, msg := range embeddedMessages {
+		pbMsg := testproto.TestEmbedded{
+			Embedded1: &testproto.TestEmbedded_Embedded{
+				Uint32: &msg.Embedded1.Uint32,
+				Uint64: &msg.Embedded1.Uint64,
+			},
+			Embedded2: &testproto.TestEmbedded_Embedded{
+				Uint32: &msg.Embedded2.Uint32,
+				Uint64: &msg.Embedded2.Uint64,
+			},
+		}
+		pb, err := proto.Marshal(&pbMsg)
+		if err != nil {
+			t.Fatalf("marshal protobuf: %v", err)
+		}
+
+		var m = struct {
+			Embedded1 embeddedMessage
+			Embedded2 *embeddedMessage
+		}{}
+		if err = Unmarshal(pb, &m); err != nil {
+			t.Fatalf("unmarshal embedded: %v", err)
+		}
+		if msg.Embedded1.Uint32 != m.Embedded1.Uint32 {
+			t.Fatalf("unmarshal embedded: expected %#v, got %#v", msg.Embedded1.Uint32, m.Embedded1.Uint32)
+		}
+		if msg.Embedded1.Uint64 != m.Embedded1.Uint64 {
+			t.Fatalf("unmarshal embedded: expected %#v, got %#v", msg.Embedded1.Uint64, m.Embedded1.Uint64)
+		}
+		if msg.Embedded2.Uint32 != m.Embedded2.Uint32 {
+			t.Fatalf("unmarshal embedded: expected %#v, got %#v", msg.Embedded2.Uint32, m.Embedded2.Uint32)
+		}
+		if msg.Embedded2.Uint64 != m.Embedded2.Uint64 {
+			t.Fatalf("unmarshal embedded: expected %#v, got %#v", msg.Embedded2.Uint64, m.Embedded2.Uint64)
 		}
 	}
 }

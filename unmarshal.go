@@ -10,9 +10,16 @@ import (
 // Unmarshal parses the protocol buffer representation in data and places
 // the decoded result in v. If the struct underlying v does not match the
 // data, the results can be unpredictable.
+//
+// Unmarshal uses the inverse of the encodings that Marshal uses,
+// allocating slices and pointers as necessary.
 func Unmarshal(data []byte, v interface{}) (err error) {
 	defer func() {
-		if recover() != nil {
+		if v := recover(); v != nil {
+			if msg, ok := v.(string); ok {
+				err = errors.New(msg)
+				return
+			}
 			err = errors.New("malformed packet")
 		}
 	}()
@@ -147,6 +154,7 @@ func unmarshalFixed32(val reflect.Value, v uint32) error {
 	case reflect.Float32:
 		x := float64(math.Float32frombits(v))
 		if val.OverflowFloat(float64(x)) {
+			return errors.New("float32 overflow")
 		}
 		val.SetFloat(float64(x))
 	case reflect.Slice:
@@ -173,6 +181,7 @@ func unmarshalFixed64(val reflect.Value, v uint64) error {
 	case reflect.Float64:
 		x := math.Float64frombits(v)
 		if val.OverflowFloat(x) {
+			return errors.New("float64 overflow")
 		}
 		val.SetFloat(x)
 	case reflect.Slice:
@@ -208,6 +217,13 @@ func unmarshalBytes(val reflect.Value, b []byte) error {
 		case reflect.Uint8: // byte slice
 			val.SetBytes(b)
 		}
+	case reflect.Struct:
+		return unmarshal(b, val)
+	case reflect.Ptr:
+		if val.IsNil() {
+			val.Set(reflect.New(val.Type().Elem()))
+		}
+		return unmarshal(b, val.Elem())
 	}
 	return nil
 }

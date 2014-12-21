@@ -16,13 +16,13 @@ const (
 	wireFixed32 = 5
 )
 
-// Marshal returns the protocl buffer encoding of v. The struct underlying
-// v must be a pointer.
+// Marshal traverses the value v recursively and returns the protocol
+// buffer encoding of v. The struct underlying v must be a pointer.
 //
 // Marshal currently encodes all visible field, which does not allow
-// distinction between 'required' and 'optional' fields. Marshal returns
-// an error if a struct field type is not supported. If the buffer is too
-// small, Marshal will panic.
+// distinction between 'required' and 'optional' fields. Marshal ignores
+// unsupported struct field types. If the buffer is too small, Marshal
+// will panic.
 func Marshal(data []byte, v interface{}) (n int, err error) {
 	val := reflect.ValueOf(v)
 	if val.Kind() != reflect.Ptr {
@@ -58,14 +58,43 @@ func marshal(data []byte, val reflect.Value) (n int, err error) {
 			n += marshalString(data[n:], i+1, field.String())
 		case reflect.Slice:
 			m, err := marshalSlice(data[n:], i+1, field)
-			n += m
 			if err != nil {
-				return n, err
+				return n + m, err
 			}
-		default:
-			return n, errors.New("invalid type: " + field.Kind().String())
+			n += m
+		case reflect.Struct:
+			m, err := marshalStruct(data[n:], i+1, field)
+			if err != nil {
+				return n + m, err
+			}
+			n += m
+		case reflect.Ptr:
+			if field.IsNil() {
+				continue
+			}
+			m, err := marshalStruct(data[n:], i+1, field.Elem())
+			if err != nil {
+				return n + m, err
+			}
+			n += m
 		}
 	}
+	return n, err
+}
+
+func marshalStruct(data []byte, key int, val reflect.Value) (n int, err error) {
+	m, err := size(val)
+	if err != nil {
+		return n + m, err
+	}
+	buf := make([]byte, m)
+	m, err = marshal(buf, val)
+	if err != nil {
+		return n + m, err
+	}
+	data[n], n = byte(key)<<3|wireBytes, n+1
+	n += binary.PutUvarint(data[n:], uint64(m))
+	n += copy(data[n:], buf)
 	return n, err
 }
 
@@ -151,8 +180,8 @@ func marshalBytes(data []byte, key int, v []byte) (n int) {
 	return n
 }
 
-// Size returns the encoded protocol buffer size. The struct underlying v
-// must be a pointer.
+// Size traverses the value v recursively and returns the encoded
+// protocol buffer size. The struct underlying v must be a pointer.
 func Size(v interface{}) (n int, err error) {
 	val := reflect.ValueOf(v)
 	if val.Kind() != reflect.Ptr {
@@ -185,12 +214,22 @@ func size(val reflect.Value) (n int, err error) {
 			n += 1 + m + uvarintSize(uint64(m))
 		case reflect.Slice:
 			m, err := sliceSize(field, field.Len())
-			n += m
 			if err != nil {
-				return n, err
+				return n + m, err
 			}
-		default:
-			return n, errors.New("invalid type: " + field.Kind().String())
+			n += m
+		case reflect.Struct:
+			m, err := size(field)
+			if err != nil {
+				return n + m, err
+			}
+			n += 1 + m + uvarintSize(uint64(m))
+		case reflect.Ptr:
+			m, err := size(field.Elem())
+			if err != nil {
+				return n + m, err
+			}
+			n += 1 + m + uvarintSize(uint64(m))
 		}
 	}
 	return n, err
