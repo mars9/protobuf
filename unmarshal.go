@@ -3,6 +3,7 @@ package protobuf
 import (
 	"encoding/binary"
 	"errors"
+	"math"
 	"reflect"
 )
 
@@ -51,6 +52,18 @@ func unmarshal(data []byte, val reflect.Value) (err error) {
 			if err = unmarshalUvarint(field, v); err != nil {
 				return err
 			}
+		case wireFixed32:
+			v := binary.LittleEndian.Uint32(data)
+			if err = unmarshalFixed32(field, v); err != nil {
+				return err
+			}
+			data = data[4:]
+		case wireFixed64:
+			v := binary.LittleEndian.Uint64(data)
+			if err = unmarshalFixed64(field, v); err != nil {
+				return err
+			}
+			data = data[8:]
 		case wireBytes:
 			v, n := binary.Uvarint(data)
 			if n <= 0 {
@@ -80,20 +93,20 @@ func unmarshalUvarint(val reflect.Value, v uint64) error {
 	return nil
 }
 
-func unmarshalUintSlice(val reflect.Value, v uint64) (err error) {
+func unmarshalUintSlice(val reflect.Value, v uint64) error {
 	vtype := val.Type().Elem()
 	elem := reflect.New(vtype).Elem()
 	switch vtype.Kind() {
 	case reflect.Int32, reflect.Int64:
-		if err = unmarshalInt(elem, int64(v)); err != nil {
+		if err := unmarshalInt(elem, int64(v)); err != nil {
 			return err
 		}
 	case reflect.Uint32, reflect.Uint64:
-		if err = unmarshalUint(elem, v); err != nil {
+		if err := unmarshalUint(elem, v); err != nil {
 			return err
 		}
 	case reflect.Bool:
-		if err = unmarshalBool(elem, v); err != nil {
+		if err := unmarshalBool(elem, v); err != nil {
 			return err
 		}
 	}
@@ -126,6 +139,58 @@ func unmarshalBool(val reflect.Value, v uint64) error {
 	} else {
 		val.SetBool(true)
 	}
+	return nil
+}
+
+func unmarshalFixed32(val reflect.Value, v uint32) error {
+	switch val.Kind() {
+	case reflect.Float32:
+		x := float64(math.Float32frombits(v))
+		if val.OverflowFloat(float64(x)) {
+		}
+		val.SetFloat(float64(x))
+	case reflect.Slice:
+		return unmarshalFixed32Slice(val, v)
+	}
+	return nil
+}
+
+func unmarshalFixed32Slice(val reflect.Value, v uint32) error {
+	vtype := val.Type().Elem()
+	elem := reflect.New(vtype).Elem()
+	switch vtype.Kind() {
+	case reflect.Float32:
+		if err := unmarshalFixed32(elem, v); err != nil {
+			return err
+		}
+	}
+	val.Set(reflect.Append(val, elem))
+	return nil
+}
+
+func unmarshalFixed64(val reflect.Value, v uint64) error {
+	switch val.Kind() {
+	case reflect.Float64:
+		x := math.Float64frombits(v)
+		if val.OverflowFloat(x) {
+		}
+		val.SetFloat(x)
+	case reflect.Slice:
+		return unmarshalFixed64Slice(val, v)
+	}
+	return nil
+}
+
+func unmarshalFixed64Slice(val reflect.Value, v uint64) error {
+	vtype := val.Type().Elem()
+	elem := reflect.New(vtype).Elem()
+	switch vtype.Kind() {
+	case reflect.Float64:
+		if err := unmarshalFixed64(elem, v); err != nil {
+			return err
+		}
+	}
+	val.Set(reflect.Append(val, elem))
 	return nil
 }
 

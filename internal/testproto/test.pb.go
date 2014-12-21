@@ -10,10 +10,12 @@ It is generated from these files:
 
 It has these top-level messages:
 	TestUint
+	TestFixed
 	TestInt
 	TestBool
 	TestBytes
 	TestSlice
+	TestFixedSlice
 */
 package testproto
 
@@ -44,6 +46,30 @@ func (m *TestUint) GetUint32() uint32 {
 func (m *TestUint) GetUint64() uint64 {
 	if m != nil && m.Uint64 != nil {
 		return *m.Uint64
+	}
+	return 0
+}
+
+type TestFixed struct {
+	Float32          *float32 `protobuf:"fixed32,1,req" json:"Float32,omitempty"`
+	Float64          *float64 `protobuf:"fixed64,2,req" json:"Float64,omitempty"`
+	XXX_unrecognized []byte   `json:"-"`
+}
+
+func (m *TestFixed) Reset()         { *m = TestFixed{} }
+func (m *TestFixed) String() string { return proto.CompactTextString(m) }
+func (*TestFixed) ProtoMessage()    {}
+
+func (m *TestFixed) GetFloat32() float32 {
+	if m != nil && m.Float32 != nil {
+		return *m.Float32
+	}
+	return 0
+}
+
+func (m *TestFixed) GetFloat64() float64 {
+	if m != nil && m.Float64 != nil {
+		return *m.Float64
 	}
 	return 0
 }
@@ -172,6 +198,30 @@ func (m *TestSlice) GetStringSlice() []string {
 func (m *TestSlice) GetBytesSlice() [][]byte {
 	if m != nil {
 		return m.BytesSlice
+	}
+	return nil
+}
+
+type TestFixedSlice struct {
+	Float32Slice     []float32 `protobuf:"fixed32,1,rep" json:"Float32Slice,omitempty"`
+	Float64Slice     []float64 `protobuf:"fixed64,2,rep" json:"Float64Slice,omitempty"`
+	XXX_unrecognized []byte    `json:"-"`
+}
+
+func (m *TestFixedSlice) Reset()         { *m = TestFixedSlice{} }
+func (m *TestFixedSlice) String() string { return proto.CompactTextString(m) }
+func (*TestFixedSlice) ProtoMessage()    {}
+
+func (m *TestFixedSlice) GetFloat32Slice() []float32 {
+	if m != nil {
+		return m.Float32Slice
+	}
+	return nil
+}
+
+func (m *TestFixedSlice) GetFloat64Slice() []float64 {
+	if m != nil {
+		return m.Float64Slice
 	}
 	return nil
 }

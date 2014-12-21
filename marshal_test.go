@@ -29,6 +29,17 @@ var intMessages = []struct {
 	{Int32: math.MinInt32, Int64: math.MinInt64},
 }
 
+var fixedMessages = []struct {
+	Float32 float32
+	Float64 float64
+}{
+	{Float32: 0, Float64: 0},
+	{Float32: 1, Float64: 1},
+	{Float32: -1, Float64: -1},
+	{Float32: math.MaxFloat32, Float64: math.MaxFloat64},
+	{Float32: math.SmallestNonzeroFloat32, Float64: math.SmallestNonzeroFloat64},
+}
+
 var boolMessages = []struct {
 	Bool bool
 }{
@@ -51,6 +62,7 @@ var sliceMessages = []struct {
 	Int64Slice  []int64
 	BoolSlice   []bool
 	StringSlice []string
+	//ByteSlice   [][]byte // TODO
 }{
 	{Uint32Slice: []uint32{0, 0, 0}},
 	{Uint32Slice: []uint32{1, 1, 1}},
@@ -76,6 +88,23 @@ var sliceMessages = []struct {
 
 	{StringSlice: []string{"", "", ""}},
 	{StringSlice: []string{"string", "string", "string"}},
+}
+
+var fixedSliceMessages = []struct {
+	Float32Slice []float32
+	Float64Slice []float64
+}{
+	{Float32Slice: []float32{0, 0, 0}},
+	{Float32Slice: []float32{1, 1, 1}},
+	{Float32Slice: []float32{-1, -1, -1}},
+	{Float32Slice: []float32{math.MaxFloat32, math.MaxFloat32, math.MaxFloat32}},
+	{Float32Slice: []float32{math.SmallestNonzeroFloat32, math.SmallestNonzeroFloat32}},
+
+	{Float64Slice: []float64{0, 0, 0}},
+	{Float64Slice: []float64{1, 1, 1}},
+	{Float64Slice: []float64{-1, -1, -1}},
+	{Float64Slice: []float64{math.MaxFloat64, math.MaxFloat64, math.MaxFloat64}},
+	{Float64Slice: []float64{math.SmallestNonzeroFloat64, math.SmallestNonzeroFloat64}},
 }
 
 func TestUintMarshal(t *testing.T) {
@@ -144,6 +173,41 @@ func TestIntMarshal(t *testing.T) {
 		}
 		if bytes.Compare(b, pb) != 0 {
 			t.Fatalf("marshal int: expected bytes %q, got %q", pb, b)
+		}
+	}
+}
+
+func TestFixedMarshal(t *testing.T) {
+	t.Parallel()
+
+	for _, msg := range fixedMessages {
+		size, err := Size(&msg)
+		if err != nil {
+			t.Fatalf("size fixed: %v", err)
+		}
+		b := make([]byte, size)
+		n, err := Marshal(b, &msg)
+		if err != nil {
+			t.Fatalf("marshal fixed: %v", err)
+		}
+		if n != size {
+			t.Fatalf("marshal fixed: expected size %d, got %d", size, n)
+		}
+
+		pbMsg := testproto.TestFixed{
+			Float32: proto.Float32(msg.Float32),
+			Float64: proto.Float64(msg.Float64),
+		}
+		pb, err := proto.Marshal(&pbMsg)
+		if err != nil {
+			t.Fatalf("marshal protobuf: %v", err)
+		}
+
+		if size != len(pb) {
+			t.Fatalf("marshal fixed: expected size %d, got %d", len(pb), size)
+		}
+		if bytes.Compare(b, pb) != 0 {
+			t.Fatalf("marshal fixed: expected bytes %q, got %q", pb, b)
 		}
 	}
 }
@@ -250,7 +314,41 @@ func TestSliceMarshal(t *testing.T) {
 			t.Fatalf("marshal slice: expected size %d, got %d", len(pb), size)
 		}
 		if bytes.Compare(b, pb) != 0 {
-			t.Fatalf("marshal bytes: expected bytes %q, got %q", pb, b)
+			t.Fatalf("marshal slice: expected bytes %q, got %q", pb, b)
+		}
+	}
+}
+
+func TestFixedSliceMarshal(t *testing.T) {
+	t.Parallel()
+
+	for _, msg := range fixedSliceMessages {
+		size, err := Size(&msg)
+		if err != nil {
+			t.Fatalf("size fixed slice: %v", err)
+		}
+		b := make([]byte, size)
+		n, err := Marshal(b, &msg)
+		if err != nil {
+			t.Fatalf("marshal fixed slice: %v", err)
+		}
+		if n != size {
+			t.Fatalf("marshal fixed slice: expected size %d, got %d", size, n)
+		}
+
+		pbMsg := testproto.TestFixedSlice{
+			Float32Slice: msg.Float32Slice,
+			Float64Slice: msg.Float64Slice,
+		}
+		pb, err := proto.Marshal(&pbMsg)
+		if err != nil {
+			t.Fatalf("marshal protobuf: %v", err)
+		}
+		if size != len(pb) {
+			t.Fatalf("marshal fixed slice: expected size %d, got %d", len(pb), size)
+		}
+		if bytes.Compare(b, pb) != 0 {
+			t.Fatalf("marshal fixed slice: expected bytes %q, got %q", pb, b)
 		}
 	}
 }

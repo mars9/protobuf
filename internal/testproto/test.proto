@@ -5,6 +5,11 @@ message TestUint {
 	required uint64 Uint64 = 2;
 }
 
+message TestFixed {
+	required float Float32  = 1;
+	required double Float64 = 2;
+}
+
 message TestInt {
 	required int32 Int32 = 1;
 	required int64 Int64 = 2;
@@ -27,4 +32,9 @@ message TestSlice {
 	repeated bool BoolSlice      = 5;
 	repeated string StringSlice  = 6;
 	repeated bytes BytesSlice    = 7;
+}
+
+message TestFixedSlice {
+	repeated float Float32Slice  = 1;
+	repeated double Float64Slice = 2;
 }

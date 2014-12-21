@@ -5,14 +5,15 @@ package protobuf
 import (
 	"encoding/binary"
 	"errors"
+	"math"
 	"reflect"
 )
 
 const (
-	wireVarint = 0
-	// TODO: wireFixed64 = 1
-	wireBytes = 2
-	// TODO: wireFixed32 = 5
+	wireVarint  = 0
+	wireFixed64 = 1
+	wireBytes   = 2
+	wireFixed32 = 5
 )
 
 // Marshal returns the protocl buffer encoding of v. The struct underlying
@@ -38,11 +39,19 @@ func marshal(data []byte, val reflect.Value) (n int, err error) {
 			continue
 		}
 
+		// TODO
+		//fmt.Printf("%v\n", val.Type().Field(i).Tag)
 		switch field.Kind() {
 		case reflect.Int32, reflect.Int64:
 			n += marshalUint(data[n:], i+1, uint64(field.Int()))
 		case reflect.Uint32, reflect.Uint64:
 			n += marshalUint(data[n:], i+1, field.Uint())
+		case reflect.Float32:
+			x := math.Float32bits(float32(field.Float()))
+			n += marshalFloat32(data[n:], i+1, x)
+		case reflect.Float64:
+			x := math.Float64bits(field.Float())
+			n += marshalFloat64(data[n:], i+1, x)
 		case reflect.Bool:
 			n += marshalBool(data[n:], i+1, field.Bool())
 		case reflect.String:
@@ -72,6 +81,18 @@ func marshalSlice(data []byte, key int, val reflect.Value) (n int, err error) {
 		for i := 0; i < vlen; i++ {
 			n += marshalUint(data[n:], key, val.Index(i).Uint())
 		}
+	case reflect.Float32:
+		var x uint32
+		for i := 0; i < vlen; i++ {
+			x = math.Float32bits(float32(val.Index(i).Float()))
+			n += marshalFloat32(data[n:], key, x)
+		}
+	case reflect.Float64:
+		var x uint64
+		for i := 0; i < vlen; i++ {
+			x = math.Float64bits(val.Index(i).Float())
+			n += marshalFloat64(data[n:], key, x)
+		}
 	case reflect.Bool:
 		for i := 0; i < vlen; i++ {
 			n += marshalBool(data[n:], key, val.Index(i).Bool())
@@ -92,6 +113,18 @@ func marshalUint(data []byte, key int, v uint64) (n int) {
 	data[n], n = byte(key)<<3|wireVarint, n+1
 	n += binary.PutUvarint(data[n:], v)
 	return n
+}
+
+func marshalFloat32(data []byte, key int, v uint32) (n int) {
+	data[n], n = byte(key)<<3|wireFixed32, n+1
+	binary.LittleEndian.PutUint32(data[n:], v)
+	return n + 4
+}
+
+func marshalFloat64(data []byte, key int, v uint64) (n int) {
+	data[n], n = byte(key)<<3|wireFixed64, n+1
+	binary.LittleEndian.PutUint64(data[n:], v)
+	return n + 8
 }
 
 func marshalBool(data []byte, key int, v bool) (n int) {
@@ -137,10 +170,14 @@ func size(val reflect.Value) (n int, err error) {
 		}
 
 		switch field.Kind() {
-		case reflect.Uint32, reflect.Uint64:
-			n += 1 + uvarintSize(field.Uint())
 		case reflect.Int32, reflect.Int64:
 			n += 1 + uvarintSize(uint64(field.Int()))
+		case reflect.Uint32, reflect.Uint64:
+			n += 1 + uvarintSize(field.Uint())
+		case reflect.Float32:
+			n += 5
+		case reflect.Float64:
+			n += 9
 		case reflect.Bool:
 			n += 2
 		case reflect.String:
@@ -161,13 +198,21 @@ func size(val reflect.Value) (n int, err error) {
 
 func sliceSize(val reflect.Value, vlen int) (n int, err error) {
 	switch val.Type().Elem().Kind() {
+	case reflect.Int32, reflect.Int64:
+		for i := 0; i < vlen; i++ {
+			n += 1 + uvarintSize(uint64(val.Index(i).Int()))
+		}
 	case reflect.Uint32, reflect.Uint64:
 		for i := 0; i < vlen; i++ {
 			n += 1 + uvarintSize(val.Index(i).Uint())
 		}
-	case reflect.Int32, reflect.Int64:
+	case reflect.Float32:
 		for i := 0; i < vlen; i++ {
-			n += 1 + uvarintSize(uint64(val.Index(i).Int()))
+			n += 5
+		}
+	case reflect.Float64:
+		for i := 0; i < vlen; i++ {
+			n += 9
 		}
 	case reflect.Bool:
 		for i := 0; i < vlen; i++ {

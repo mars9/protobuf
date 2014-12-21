@@ -169,3 +169,33 @@ func TestSliceUnmarshal(t *testing.T) {
 		}
 	}
 }
+
+func TestFixedSliceUnmarshal(t *testing.T) {
+	t.Parallel()
+
+	for _, msg := range fixedSliceMessages {
+		pbMsg := testproto.TestFixedSlice{
+			Float32Slice: msg.Float32Slice,
+			Float64Slice: msg.Float64Slice,
+		}
+		pb, err := proto.Marshal(&pbMsg)
+		if err != nil {
+			t.Fatalf("marshal protobuf: %v", err)
+		}
+
+		var m = struct {
+			Float32Slice []float32
+			Float64Slice []float64
+		}{}
+		if err = Unmarshal(pb, &m); err != nil {
+			t.Fatalf("unmarshal fixed slice: %v", err)
+		}
+
+		if !reflect.DeepEqual(msg.Float32Slice, m.Float32Slice) {
+			t.Fatalf("unmashal float32 slice: expected %#v, got %#v", msg.Float32Slice, m.Float32Slice)
+		}
+		if !reflect.DeepEqual(msg.Float64Slice, m.Float64Slice) {
+			t.Fatalf("unmashal float64 slice: expected %#v, got %#v", msg.Float64Slice, m.Float64Slice)
+		}
+	}
+}
