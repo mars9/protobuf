@@ -33,14 +33,20 @@ func Marshal(data []byte, v interface{}) (n int, err error) {
 
 func marshal(data []byte, val reflect.Value) (n int, err error) {
 	num := val.NumField()
+	//var ftype int
 	for i := 0; i < num; i++ {
 		field := val.Field(i)
 		if !field.CanSet() {
 			continue
 		}
 
-		// TODO
-		//fmt.Printf("%v\n", val.Type().Field(i).Tag)
+		/*
+			ftype, _ = parseTag(val.Type().Field(i).Tag.Get("protobuf"))
+			if ftype > ftypeStart && ftype < ftypeEnd {
+				continue
+			}
+		*/
+
 		switch field.Kind() {
 		case reflect.Int32, reflect.Int64:
 			n += marshalUint(data[n:], i+1, uint64(field.Int()))
@@ -87,15 +93,11 @@ func marshalStruct(data []byte, key int, val reflect.Value) (n int, err error) {
 	if err != nil {
 		return n + m, err
 	}
-	buf := make([]byte, m)
-	m, err = marshal(buf, val)
-	if err != nil {
-		return n + m, err
-	}
 	data[n], n = byte(key)<<3|wireBytes, n+1
 	n += binary.PutUvarint(data[n:], uint64(m))
-	n += copy(data[n:], buf)
-	return n, err
+
+	m, err = marshal(data[n:], val)
+	return n + m, err
 }
 
 func marshalSlice(data []byte, key int, val reflect.Value) (n int, err error) {
