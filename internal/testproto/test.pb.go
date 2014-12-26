@@ -9,15 +9,10 @@ It is generated from these files:
 	test.proto
 
 It has these top-level messages:
-	TestUint
-	TestFixed
-	TestInt
-	TestBool
-	TestBytes
-	TestSlice
-	TestByteSlice
-	TestFixedSlice
-	TestEmbedded
+	ProtoTypes
+	ProtoSlice
+	ProtoBytes
+	ProtoStruct
 */
 package testproto
 
@@ -28,256 +23,216 @@ import math "math"
 var _ = proto.Marshal
 var _ = math.Inf
 
-type TestUint struct {
-	Uint32           *uint32 `protobuf:"varint,1,req" json:"Uint32,omitempty"`
-	Uint64           *uint64 `protobuf:"varint,2,req" json:"Uint64,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+type ProtoTypes struct {
+	Uint32           *uint32  `protobuf:"varint,1,req" json:"Uint32,omitempty"`
+	Uint64           *uint64  `protobuf:"varint,2,req" json:"Uint64,omitempty"`
+	Int32            *int32   `protobuf:"varint,3,req" json:"Int32,omitempty"`
+	Int64            *int64   `protobuf:"varint,4,req" json:"Int64,omitempty"`
+	Float32          *float32 `protobuf:"fixed32,5,req" json:"Float32,omitempty"`
+	Float64          *float64 `protobuf:"fixed64,6,req" json:"Float64,omitempty"`
+	Bool             *bool    `protobuf:"varint,7,req" json:"Bool,omitempty"`
+	String_          *string  `protobuf:"bytes,8,req" json:"String,omitempty"`
+	XXX_unrecognized []byte   `json:"-"`
 }
 
-func (m *TestUint) Reset()         { *m = TestUint{} }
-func (m *TestUint) String() string { return proto.CompactTextString(m) }
-func (*TestUint) ProtoMessage()    {}
+func (m *ProtoTypes) Reset()         { *m = ProtoTypes{} }
+func (m *ProtoTypes) String() string { return proto.CompactTextString(m) }
+func (*ProtoTypes) ProtoMessage()    {}
 
-func (m *TestUint) GetUint32() uint32 {
+func (m *ProtoTypes) GetUint32() uint32 {
 	if m != nil && m.Uint32 != nil {
 		return *m.Uint32
 	}
 	return 0
 }
 
-func (m *TestUint) GetUint64() uint64 {
+func (m *ProtoTypes) GetUint64() uint64 {
 	if m != nil && m.Uint64 != nil {
 		return *m.Uint64
 	}
 	return 0
 }
 
-type TestFixed struct {
-	Float32          *float32 `protobuf:"fixed32,1,req" json:"Float32,omitempty"`
-	Float64          *float64 `protobuf:"fixed64,2,req" json:"Float64,omitempty"`
-	XXX_unrecognized []byte   `json:"-"`
-}
-
-func (m *TestFixed) Reset()         { *m = TestFixed{} }
-func (m *TestFixed) String() string { return proto.CompactTextString(m) }
-func (*TestFixed) ProtoMessage()    {}
-
-func (m *TestFixed) GetFloat32() float32 {
-	if m != nil && m.Float32 != nil {
-		return *m.Float32
-	}
-	return 0
-}
-
-func (m *TestFixed) GetFloat64() float64 {
-	if m != nil && m.Float64 != nil {
-		return *m.Float64
-	}
-	return 0
-}
-
-type TestInt struct {
-	Int32            *int32 `protobuf:"varint,1,req" json:"Int32,omitempty"`
-	Int64            *int64 `protobuf:"varint,2,req" json:"Int64,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
-}
-
-func (m *TestInt) Reset()         { *m = TestInt{} }
-func (m *TestInt) String() string { return proto.CompactTextString(m) }
-func (*TestInt) ProtoMessage()    {}
-
-func (m *TestInt) GetInt32() int32 {
+func (m *ProtoTypes) GetInt32() int32 {
 	if m != nil && m.Int32 != nil {
 		return *m.Int32
 	}
 	return 0
 }
 
-func (m *TestInt) GetInt64() int64 {
+func (m *ProtoTypes) GetInt64() int64 {
 	if m != nil && m.Int64 != nil {
 		return *m.Int64
 	}
 	return 0
 }
 
-type TestBool struct {
-	Bool             *bool  `protobuf:"varint,1,req" json:"Bool,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
+func (m *ProtoTypes) GetFloat32() float32 {
+	if m != nil && m.Float32 != nil {
+		return *m.Float32
+	}
+	return 0
 }
 
-func (m *TestBool) Reset()         { *m = TestBool{} }
-func (m *TestBool) String() string { return proto.CompactTextString(m) }
-func (*TestBool) ProtoMessage()    {}
+func (m *ProtoTypes) GetFloat64() float64 {
+	if m != nil && m.Float64 != nil {
+		return *m.Float64
+	}
+	return 0
+}
 
-func (m *TestBool) GetBool() bool {
+func (m *ProtoTypes) GetBool() bool {
 	if m != nil && m.Bool != nil {
 		return *m.Bool
 	}
 	return false
 }
 
-type TestBytes struct {
-	String_          *string `protobuf:"bytes,1,req" json:"String,omitempty"`
-	Bytes            []byte  `protobuf:"bytes,2,req" json:"Bytes,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
-}
-
-func (m *TestBytes) Reset()         { *m = TestBytes{} }
-func (m *TestBytes) String() string { return proto.CompactTextString(m) }
-func (*TestBytes) ProtoMessage()    {}
-
-func (m *TestBytes) GetString_() string {
+func (m *ProtoTypes) GetString_() string {
 	if m != nil && m.String_ != nil {
 		return *m.String_
 	}
 	return ""
 }
 
-func (m *TestBytes) GetBytes() []byte {
-	if m != nil {
-		return m.Bytes
-	}
-	return nil
+type ProtoSlice struct {
+	Uint32Slice      []uint32  `protobuf:"varint,1,rep" json:"Uint32Slice,omitempty"`
+	Uint64Slice      []uint64  `protobuf:"varint,2,rep" json:"Uint64Slice,omitempty"`
+	Int32Slice       []int32   `protobuf:"varint,3,rep" json:"Int32Slice,omitempty"`
+	Int64Slice       []int64   `protobuf:"varint,4,rep" json:"Int64Slice,omitempty"`
+	Float32Slice     []float32 `protobuf:"fixed32,5,rep" json:"Float32Slice,omitempty"`
+	Float64Slice     []float64 `protobuf:"fixed64,6,rep" json:"Float64Slice,omitempty"`
+	BoolSlice        []bool    `protobuf:"varint,7,rep" json:"BoolSlice,omitempty"`
+	StringSlice      []string  `protobuf:"bytes,8,rep" json:"StringSlice,omitempty"`
+	XXX_unrecognized []byte    `json:"-"`
 }
 
-type TestSlice struct {
-	Uint32Slice      []uint32 `protobuf:"varint,1,rep" json:"Uint32Slice,omitempty"`
-	Uint64Slice      []uint64 `protobuf:"varint,2,rep" json:"Uint64Slice,omitempty"`
-	Int32Slice       []int32  `protobuf:"varint,3,rep" json:"Int32Slice,omitempty"`
-	Int64Slice       []int64  `protobuf:"varint,4,rep" json:"Int64Slice,omitempty"`
-	BoolSlice        []bool   `protobuf:"varint,5,rep" json:"BoolSlice,omitempty"`
-	StringSlice      []string `protobuf:"bytes,6,rep" json:"StringSlice,omitempty"`
-	XXX_unrecognized []byte   `json:"-"`
-}
+func (m *ProtoSlice) Reset()         { *m = ProtoSlice{} }
+func (m *ProtoSlice) String() string { return proto.CompactTextString(m) }
+func (*ProtoSlice) ProtoMessage()    {}
 
-func (m *TestSlice) Reset()         { *m = TestSlice{} }
-func (m *TestSlice) String() string { return proto.CompactTextString(m) }
-func (*TestSlice) ProtoMessage()    {}
-
-func (m *TestSlice) GetUint32Slice() []uint32 {
+func (m *ProtoSlice) GetUint32Slice() []uint32 {
 	if m != nil {
 		return m.Uint32Slice
 	}
 	return nil
 }
 
-func (m *TestSlice) GetUint64Slice() []uint64 {
+func (m *ProtoSlice) GetUint64Slice() []uint64 {
 	if m != nil {
 		return m.Uint64Slice
 	}
 	return nil
 }
 
-func (m *TestSlice) GetInt32Slice() []int32 {
+func (m *ProtoSlice) GetInt32Slice() []int32 {
 	if m != nil {
 		return m.Int32Slice
 	}
 	return nil
 }
 
-func (m *TestSlice) GetInt64Slice() []int64 {
+func (m *ProtoSlice) GetInt64Slice() []int64 {
 	if m != nil {
 		return m.Int64Slice
 	}
 	return nil
 }
 
-func (m *TestSlice) GetBoolSlice() []bool {
-	if m != nil {
-		return m.BoolSlice
-	}
-	return nil
-}
-
-func (m *TestSlice) GetStringSlice() []string {
-	if m != nil {
-		return m.StringSlice
-	}
-	return nil
-}
-
-type TestByteSlice struct {
-	ByteSlice        [][]byte `protobuf:"bytes,1,rep" json:"ByteSlice,omitempty"`
-	XXX_unrecognized []byte   `json:"-"`
-}
-
-func (m *TestByteSlice) Reset()         { *m = TestByteSlice{} }
-func (m *TestByteSlice) String() string { return proto.CompactTextString(m) }
-func (*TestByteSlice) ProtoMessage()    {}
-
-func (m *TestByteSlice) GetByteSlice() [][]byte {
-	if m != nil {
-		return m.ByteSlice
-	}
-	return nil
-}
-
-type TestFixedSlice struct {
-	Float32Slice     []float32 `protobuf:"fixed32,1,rep" json:"Float32Slice,omitempty"`
-	Float64Slice     []float64 `protobuf:"fixed64,2,rep" json:"Float64Slice,omitempty"`
-	XXX_unrecognized []byte    `json:"-"`
-}
-
-func (m *TestFixedSlice) Reset()         { *m = TestFixedSlice{} }
-func (m *TestFixedSlice) String() string { return proto.CompactTextString(m) }
-func (*TestFixedSlice) ProtoMessage()    {}
-
-func (m *TestFixedSlice) GetFloat32Slice() []float32 {
+func (m *ProtoSlice) GetFloat32Slice() []float32 {
 	if m != nil {
 		return m.Float32Slice
 	}
 	return nil
 }
 
-func (m *TestFixedSlice) GetFloat64Slice() []float64 {
+func (m *ProtoSlice) GetFloat64Slice() []float64 {
 	if m != nil {
 		return m.Float64Slice
 	}
 	return nil
 }
 
-type TestEmbedded struct {
-	Embedded1        *TestEmbedded_Embedded `protobuf:"bytes,1,req,name=embedded1" json:"embedded1,omitempty"`
-	Embedded2        *TestEmbedded_Embedded `protobuf:"bytes,2,req,name=embedded2" json:"embedded2,omitempty"`
-	XXX_unrecognized []byte                 `json:"-"`
-}
-
-func (m *TestEmbedded) Reset()         { *m = TestEmbedded{} }
-func (m *TestEmbedded) String() string { return proto.CompactTextString(m) }
-func (*TestEmbedded) ProtoMessage()    {}
-
-func (m *TestEmbedded) GetEmbedded1() *TestEmbedded_Embedded {
+func (m *ProtoSlice) GetBoolSlice() []bool {
 	if m != nil {
-		return m.Embedded1
+		return m.BoolSlice
 	}
 	return nil
 }
 
-func (m *TestEmbedded) GetEmbedded2() *TestEmbedded_Embedded {
+func (m *ProtoSlice) GetStringSlice() []string {
 	if m != nil {
-		return m.Embedded2
+		return m.StringSlice
 	}
 	return nil
 }
 
-type TestEmbedded_Embedded struct {
+type ProtoBytes struct {
+	Bytes            []byte   `protobuf:"bytes,1,req" json:"Bytes,omitempty"`
+	BytesSlice       [][]byte `protobuf:"bytes,2,rep" json:"BytesSlice,omitempty"`
+	XXX_unrecognized []byte   `json:"-"`
+}
+
+func (m *ProtoBytes) Reset()         { *m = ProtoBytes{} }
+func (m *ProtoBytes) String() string { return proto.CompactTextString(m) }
+func (*ProtoBytes) ProtoMessage()    {}
+
+func (m *ProtoBytes) GetBytes() []byte {
+	if m != nil {
+		return m.Bytes
+	}
+	return nil
+}
+
+func (m *ProtoBytes) GetBytesSlice() [][]byte {
+	if m != nil {
+		return m.BytesSlice
+	}
+	return nil
+}
+
+type ProtoStruct struct {
+	Struct1          *ProtoStruct_Struct `protobuf:"bytes,1,req" json:"Struct1,omitempty"`
+	Struct2          *ProtoStruct_Struct `protobuf:"bytes,2,req" json:"Struct2,omitempty"`
+	XXX_unrecognized []byte              `json:"-"`
+}
+
+func (m *ProtoStruct) Reset()         { *m = ProtoStruct{} }
+func (m *ProtoStruct) String() string { return proto.CompactTextString(m) }
+func (*ProtoStruct) ProtoMessage()    {}
+
+func (m *ProtoStruct) GetStruct1() *ProtoStruct_Struct {
+	if m != nil {
+		return m.Struct1
+	}
+	return nil
+}
+
+func (m *ProtoStruct) GetStruct2() *ProtoStruct_Struct {
+	if m != nil {
+		return m.Struct2
+	}
+	return nil
+}
+
+type ProtoStruct_Struct struct {
 	Uint32           *uint32 `protobuf:"varint,1,req" json:"Uint32,omitempty"`
 	Uint64           *uint64 `protobuf:"varint,2,req" json:"Uint64,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *TestEmbedded_Embedded) Reset()         { *m = TestEmbedded_Embedded{} }
-func (m *TestEmbedded_Embedded) String() string { return proto.CompactTextString(m) }
-func (*TestEmbedded_Embedded) ProtoMessage()    {}
+func (m *ProtoStruct_Struct) Reset()         { *m = ProtoStruct_Struct{} }
+func (m *ProtoStruct_Struct) String() string { return proto.CompactTextString(m) }
+func (*ProtoStruct_Struct) ProtoMessage()    {}
 
-func (m *TestEmbedded_Embedded) GetUint32() uint32 {
+func (m *ProtoStruct_Struct) GetUint32() uint32 {
 	if m != nil && m.Uint32 != nil {
 		return *m.Uint32
 	}
 	return 0
 }
 
-func (m *TestEmbedded_Embedded) GetUint64() uint64 {
+func (m *ProtoStruct_Struct) GetUint64() uint64 {
 	if m != nil && m.Uint64 != nil {
 		return *m.Uint64
 	}

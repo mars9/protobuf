@@ -2,302 +2,121 @@ package protobuf
 
 import (
 	"bytes"
-	"math"
 	"testing"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/mars9/protobuf/internal/testproto"
 )
 
-var uintMessages = []struct {
-	Uint32 uint32
-	Uint64 uint64
-}{
-	{Uint32: 0, Uint64: 0},
-	{Uint32: 1, Uint64: 1},
-	{Uint32: math.MaxUint32, Uint64: math.MaxUint64},
-}
-
-var intMessages = []struct {
-	Int32 int32
-	Int64 int64
-}{
-	{Int32: 0, Int64: 0},
-	{Int32: 1, Int64: 1},
-	{Int32: -1, Int64: -1},
-	{Int32: math.MaxInt32, Int64: math.MaxInt64},
-	{Int32: math.MinInt32, Int64: math.MinInt64},
-}
-
-var fixedMessages = []struct {
-	Float32 float32
-	Float64 float64
-}{
-	{Float32: 0, Float64: 0},
-	{Float32: 1, Float64: 1},
-	{Float32: -1, Float64: -1},
-	{Float32: math.MaxFloat32, Float64: math.MaxFloat64},
-	{Float32: math.SmallestNonzeroFloat32, Float64: math.SmallestNonzeroFloat64},
-}
-
-var boolMessages = []struct {
-	Bool bool
-}{
-	{Bool: true},
-	{Bool: false},
-}
-
-var bytesMessages = []struct {
-	String string
-	Bytes  []byte
-}{
-	{String: "", Bytes: []byte("")},
-	{String: "string", Bytes: []byte("bytes")},
-}
-
-var sliceMessages = []struct {
-	Uint32Slice []uint32
-	Uint64Slice []uint64
-	Int32Slice  []int32
-	Int64Slice  []int64
-	BoolSlice   []bool
-	StringSlice []string
-}{
-	{Uint32Slice: []uint32{0, 0, 0}},
-	{Uint32Slice: []uint32{1, 1, 1}},
-	{Uint32Slice: []uint32{math.MaxUint32, math.MaxUint32, math.MaxUint32}},
-
-	{Uint64Slice: []uint64{0, 0, 0}},
-	{Uint64Slice: []uint64{1, 1, 1}},
-	{Uint64Slice: []uint64{math.MaxUint64, math.MaxUint64, math.MaxUint64}},
-
-	{Int32Slice: []int32{0, 0, 0}},
-	{Int32Slice: []int32{1, 1, 1}},
-	{Int32Slice: []int32{-1, -1, -1}},
-	{Int32Slice: []int32{math.MaxInt32, math.MaxInt32, math.MaxInt32}},
-	{Int32Slice: []int32{math.MinInt32, math.MinInt32, math.MinInt32}},
-
-	{Int64Slice: []int64{0, 0, 0}},
-	{Int64Slice: []int64{1, 1, 1}},
-	{Int64Slice: []int64{-1, -1, -1}},
-	{Int64Slice: []int64{math.MaxInt64, math.MaxInt64, math.MaxInt64}},
-	{Int64Slice: []int64{math.MinInt64, math.MinInt64, math.MinInt64}},
-
-	{BoolSlice: []bool{true, false}},
-
-	{StringSlice: []string{"", "", ""}},
-	{StringSlice: []string{"string", "string", "string"}},
-}
-
-var byteSliceMessages = []struct {
-	ByteSlice [][]byte
-}{
-	{ByteSlice: [][]byte{[]byte(""), []byte(""), []byte("")}},
-	{ByteSlice: [][]byte{[]byte("bytes"), []byte("bytes"), []byte("bytes")}},
-}
-
-var fixedSliceMessages = []struct {
+var protoSliceMarshal = struct {
+	Uint32Slice  []uint32
+	Uint64Slice  []uint64
+	Int32Slice   []int32
+	Int64Slice   []int64
 	Float32Slice []float32
 	Float64Slice []float64
-}{
-	{Float32Slice: []float32{0, 0, 0}},
-	{Float32Slice: []float32{1, 1, 1}},
-	{Float32Slice: []float32{-1, -1, -1}},
-	{Float32Slice: []float32{math.MaxFloat32, math.MaxFloat32, math.MaxFloat32}},
-	{Float32Slice: []float32{math.SmallestNonzeroFloat32, math.SmallestNonzeroFloat32}},
+	BoolSlice    []bool
+	StringSlice  []string
+}{}
 
-	{Float64Slice: []float64{0, 0, 0}},
-	{Float64Slice: []float64{1, 1, 1}},
-	{Float64Slice: []float64{-1, -1, -1}},
-	{Float64Slice: []float64{math.MaxFloat64, math.MaxFloat64, math.MaxFloat64}},
-	{Float64Slice: []float64{math.SmallestNonzeroFloat64, math.SmallestNonzeroFloat64}},
+func init() {
+	for _, m := range protoTypes {
+		protoSliceMarshal.Uint32Slice = append(protoSliceMarshal.Uint32Slice, m.Uint32)
+		protoSliceMarshal.Uint64Slice = append(protoSliceMarshal.Uint64Slice, m.Uint64)
+		protoSliceMarshal.Int32Slice = append(protoSliceMarshal.Int32Slice, m.Int32)
+		protoSliceMarshal.Int64Slice = append(protoSliceMarshal.Int64Slice, m.Int64)
+		protoSliceMarshal.Float32Slice = append(protoSliceMarshal.Float32Slice, m.Float32)
+		protoSliceMarshal.Float64Slice = append(protoSliceMarshal.Float64Slice, m.Float64)
+		protoSliceMarshal.BoolSlice = append(protoSliceMarshal.BoolSlice, m.Bool)
+		protoSliceMarshal.StringSlice = append(protoSliceMarshal.StringSlice, m.String)
+	}
 }
 
-type embeddedMessage struct {
-	Uint32 uint32
-	Uint64 uint64
-}
-
-var embeddedMessages = []struct {
-	Embedded1 embeddedMessage
-	Embedded2 *embeddedMessage
-}{
-	{
-		Embedded1: embeddedMessage{Uint32: math.MaxUint32, Uint64: math.MaxUint64},
-		Embedded2: &embeddedMessage{Uint32: math.MaxUint32, Uint64: math.MaxUint64},
-	},
-}
-
-func TestUintMarshal(t *testing.T) {
+func TestTypesMarshal(t *testing.T) {
 	t.Parallel()
 
-	for _, msg := range uintMessages {
-		size, err := Size(&msg)
-		if err != nil {
-			t.Fatalf("size uint: %v", err)
-		}
-		b := make([]byte, size)
-		n, err := Marshal(b, &msg)
-		if err != nil {
-			t.Fatalf("marshal uint: %v", err)
-		}
-		if n != size {
-			t.Fatalf("marshal uint: expected size %d, got %d", size, n)
+	for _, m := range protoTypes {
+		pb := &testproto.ProtoTypes{
+			Uint32:  proto.Uint32(m.Uint32),
+			Uint64:  proto.Uint64(m.Uint64),
+			Int32:   proto.Int32(m.Int32),
+			Int64:   proto.Int64(m.Int64),
+			Float32: proto.Float32(m.Float32),
+			Float64: proto.Float64(m.Float64),
+			Bool:    proto.Bool(m.Bool),
+			String_: proto.String(m.String),
 		}
 
-		pbMsg := testproto.TestUint{
-			Uint32: proto.Uint32(msg.Uint32),
-			Uint64: proto.Uint64(msg.Uint64),
-		}
-		pb, err := proto.Marshal(&pbMsg)
-		if err != nil {
-			t.Fatalf("marshal protobuf: %v", err)
+		size := Size(&m)
+		data := make([]byte, size)
+		n := Marshal(data, &m)
+		if size != n {
+			t.Fatalf("expected type size %d, got %d", size, n)
 		}
 
-		if size != len(pb) {
-			t.Fatalf("marshal uint: expected size %d, got %d", len(pb), size)
+		pbData, err := proto.Marshal(pb)
+		if err != nil {
+			t.Fatalf("protobuf marshal: %v", err)
 		}
-		if bytes.Compare(b, pb) != 0 {
-			t.Fatalf("marshal uint: expected bytes %q, got %q", pb, b)
+		if n != len(pbData) {
+			t.Fatalf("expected type size %d, got %d", size, n)
+		}
+		if bytes.Compare(data, pbData) != 0 {
+			t.Fatalf("expected type bytes %#v, got %#v", pbData, data)
 		}
 	}
 }
 
-func TestIntMarshal(t *testing.T) {
+func TestPointerTypeMarshal(t *testing.T) {
 	t.Parallel()
 
-	for _, msg := range intMessages {
-		size, err := Size(&msg)
+	for _, m := range protoTypes {
+		pb := &testproto.ProtoTypes{
+			Uint32:  proto.Uint32(m.Uint32),
+			Uint64:  proto.Uint64(m.Uint64),
+			Int32:   proto.Int32(m.Int32),
+			Int64:   proto.Int64(m.Int64),
+			Float32: proto.Float32(m.Float32),
+			Float64: proto.Float64(m.Float64),
+			Bool:    proto.Bool(m.Bool),
+			String_: proto.String(m.String),
+		}
+		var b = struct {
+			Uint32  *uint32
+			Uint64  *uint64
+			Int32   *int32
+			Int64   *int64
+			Float32 *float32
+			Float64 *float64
+			Bool    *bool
+			String  *string
+		}{
+			Uint32:  &m.Uint32,
+			Uint64:  &m.Uint64,
+			Int32:   &m.Int32,
+			Int64:   &m.Int64,
+			Float32: &m.Float32,
+			Float64: &m.Float64,
+			Bool:    &m.Bool,
+			String:  &m.String,
+		}
+
+		size := Size(&b)
+		data := make([]byte, size)
+		n := Marshal(data, &b)
+		if size != n {
+			t.Fatalf("expected pointer type size %d, got %d", size, n)
+		}
+
+		pbData, err := proto.Marshal(pb)
 		if err != nil {
-			t.Fatalf("size int: %v", err)
+			t.Fatalf("protobuf marshal: %v", err)
 		}
-		b := make([]byte, size)
-		n, err := Marshal(b, &msg)
-		if err != nil {
-			t.Fatalf("marshal int: %v", err)
+		if n != len(pbData) {
+			t.Fatalf("expected pointer type size %d, got %d", size, n)
 		}
-		if n != size {
-			t.Fatalf("marshal int: expected size %d, got %d", size, n)
-		}
-
-		pbMsg := testproto.TestInt{
-			Int32: proto.Int32(msg.Int32),
-			Int64: proto.Int64(msg.Int64),
-		}
-		pb, err := proto.Marshal(&pbMsg)
-		if err != nil {
-			t.Fatalf("marshal protobuf: %v", err)
-		}
-
-		if size != len(pb) {
-			t.Fatalf("marshal int: expected size %d, got %d", len(pb), size)
-		}
-		if bytes.Compare(b, pb) != 0 {
-			t.Fatalf("marshal int: expected bytes %q, got %q", pb, b)
-		}
-	}
-}
-
-func TestFixedMarshal(t *testing.T) {
-	t.Parallel()
-
-	for _, msg := range fixedMessages {
-		size, err := Size(&msg)
-		if err != nil {
-			t.Fatalf("size fixed: %v", err)
-		}
-		b := make([]byte, size)
-		n, err := Marshal(b, &msg)
-		if err != nil {
-			t.Fatalf("marshal fixed: %v", err)
-		}
-		if n != size {
-			t.Fatalf("marshal fixed: expected size %d, got %d", size, n)
-		}
-
-		pbMsg := testproto.TestFixed{
-			Float32: proto.Float32(msg.Float32),
-			Float64: proto.Float64(msg.Float64),
-		}
-		pb, err := proto.Marshal(&pbMsg)
-		if err != nil {
-			t.Fatalf("marshal protobuf: %v", err)
-		}
-
-		if size != len(pb) {
-			t.Fatalf("marshal fixed: expected size %d, got %d", len(pb), size)
-		}
-		if bytes.Compare(b, pb) != 0 {
-			t.Fatalf("marshal fixed: expected bytes %q, got %q", pb, b)
-		}
-	}
-}
-
-func TestBoolMarshal(t *testing.T) {
-	t.Parallel()
-
-	for _, msg := range boolMessages {
-		size, err := Size(&msg)
-		if err != nil {
-			t.Fatalf("size bool: %v", err)
-		}
-		b := make([]byte, size)
-		n, err := Marshal(b, &msg)
-		if err != nil {
-			t.Fatalf("marshal bool: %v", err)
-		}
-		if n != size {
-			t.Fatalf("marshal bool: expected size %d, got %d", size, n)
-		}
-
-		pbMsg := testproto.TestBool{
-			Bool: proto.Bool(msg.Bool),
-		}
-		pb, err := proto.Marshal(&pbMsg)
-		if err != nil {
-			t.Fatalf("marshal protobuf: %v", err)
-		}
-
-		if size != len(pb) {
-			t.Fatalf("marshal bool: expected size %d, got %d", len(pb), size)
-		}
-		if bytes.Compare(b, pb) != 0 {
-			t.Fatalf("marshal bool: expected bytes %q, got %q", pb, b)
-		}
-	}
-}
-
-func TestBytesMarshal(t *testing.T) {
-	t.Parallel()
-
-	for _, msg := range bytesMessages {
-		size, err := Size(&msg)
-		if err != nil {
-			t.Fatalf("size bytes: %v", err)
-		}
-		b := make([]byte, size)
-		n, err := Marshal(b, &msg)
-		if err != nil {
-			t.Fatalf("marshal bytes: %v", err)
-		}
-		if n != size {
-			t.Fatalf("marshal bytes: expected size %d, got %d", size, n)
-		}
-
-		pbMsg := testproto.TestBytes{
-			String_: proto.String(msg.String),
-			Bytes:   msg.Bytes,
-		}
-		pb, err := proto.Marshal(&pbMsg)
-		if err != nil {
-			t.Fatalf("marshal protobuf: %v", err)
-		}
-
-		if size != len(pb) {
-			t.Fatalf("marshal bytes: expected size %d, got %d", len(pb), size)
-		}
-		if bytes.Compare(b, pb) != 0 {
-			t.Fatalf("marshal bytes: expected bytes %q, got %q", pb, b)
+		if bytes.Compare(data, pbData) != 0 {
+			t.Fatalf("expected pointer type bytes %#v, got %#v", pbData, data)
 		}
 	}
 }
@@ -305,32 +124,28 @@ func TestBytesMarshal(t *testing.T) {
 func TestByteSliceMarshal(t *testing.T) {
 	t.Parallel()
 
-	for _, msg := range byteSliceMessages {
-		size, err := Size(&msg)
-		if err != nil {
-			t.Fatalf("size bytes slice: %v", err)
-		}
-		b := make([]byte, size)
-		n, err := Marshal(b, &msg)
-		if err != nil {
-			t.Fatalf("marshal bytes slice: %v", err)
-		}
-		if n != size {
-			t.Fatalf("marshal bytes slice: expected size %d, got %d", size, n)
+	for _, m := range protoBytes {
+		pb := &testproto.ProtoBytes{
+			Bytes:      m.Bytes,
+			BytesSlice: m.BytesSlice,
 		}
 
-		pbMsg := testproto.TestByteSlice{
-			ByteSlice: msg.ByteSlice,
+		size := Size(&m)
+		data := make([]byte, size)
+		n := Marshal(data, &m)
+		if size != n {
+			t.Fatalf("expected bytes size %d, got %d", size, n)
 		}
-		pb, err := proto.Marshal(&pbMsg)
+
+		pbData, err := proto.Marshal(pb)
 		if err != nil {
-			t.Fatalf("marshal protobuf: %v", err)
+			t.Fatalf("protobuf marshal: %v", err)
 		}
-		if size != len(pb) {
-			t.Fatalf("marshal bytes slice: expected size %d, got %d", len(pb), size)
+		if n != len(pbData) {
+			t.Fatalf("expected bytes size %d, got %d", size, n)
 		}
-		if bytes.Compare(b, pb) != 0 {
-			t.Fatalf("marshal bytes slice: expected bytes %q, got %q", pb, b)
+		if bytes.Compare(data, pbData) != 0 {
+			t.Fatalf("expected bytes bytes %#v, got %#v", pbData, data)
 		}
 	}
 }
@@ -338,111 +153,107 @@ func TestByteSliceMarshal(t *testing.T) {
 func TestSliceMarshal(t *testing.T) {
 	t.Parallel()
 
-	for _, msg := range sliceMessages {
-		size, err := Size(&msg)
-		if err != nil {
-			t.Fatalf("size slice: %v", err)
-		}
-		b := make([]byte, size)
-		n, err := Marshal(b, &msg)
-		if err != nil {
-			t.Fatalf("marshal slice: %v", err)
-		}
-		if n != size {
-			t.Fatalf("marshal slice: expected size %d, got %d", size, n)
+	pb := &testproto.ProtoSlice{
+		Uint32Slice:  protoSliceSize.Uint32Slice,
+		Uint64Slice:  protoSliceSize.Uint64Slice,
+		Int32Slice:   protoSliceSize.Int32Slice,
+		Int64Slice:   protoSliceSize.Int64Slice,
+		Float32Slice: protoSliceSize.Float32Slice,
+		Float64Slice: protoSliceSize.Float64Slice,
+		BoolSlice:    protoSliceSize.BoolSlice,
+		StringSlice:  protoSliceSize.StringSlice,
+	}
+
+	size := Size(&protoSliceMarshal)
+	data := make([]byte, size)
+	n := Marshal(data, &protoSliceMarshal)
+	if size != n {
+		t.Fatalf("expected slice size %d, got %d", size, n)
+	}
+
+	pbData, err := proto.Marshal(pb)
+	if err != nil {
+		t.Fatalf("protobuf marshal: %v", err)
+	}
+	if n != len(pbData) {
+		t.Fatalf("expected slice size %d, got %d", size, n)
+	}
+	if bytes.Compare(data, pbData) != 0 {
+		t.Fatalf("expected slice bytes %#v, got %#v", pbData, data)
+	}
+}
+
+func TestStructMarshal(t *testing.T) {
+	t.Parallel()
+
+	for _, m := range protoStruct {
+		pb := &testproto.ProtoStruct{
+			Struct1: &testproto.ProtoStruct_Struct{
+				Uint32: proto.Uint32(m.Struct1.Uint32),
+				Uint64: proto.Uint64(m.Struct1.Uint64),
+			},
+			Struct2: &testproto.ProtoStruct_Struct{
+				Uint32: proto.Uint32(m.Struct2.Uint32),
+				Uint64: proto.Uint64(m.Struct2.Uint64),
+			},
 		}
 
-		pbMsg := testproto.TestSlice{
-			Uint32Slice: msg.Uint32Slice,
-			Uint64Slice: msg.Uint64Slice,
-			Int32Slice:  msg.Int32Slice,
-			Int64Slice:  msg.Int64Slice,
-			BoolSlice:   msg.BoolSlice,
-			StringSlice: msg.StringSlice,
+		size := Size(&m)
+		data := make([]byte, size)
+		n := Marshal(data, &m)
+		if size != n {
+			t.Fatalf("expected struct size %d, got %d", size, n)
 		}
-		pb, err := proto.Marshal(&pbMsg)
+
+		pbData, err := proto.Marshal(pb)
 		if err != nil {
-			t.Fatalf("marshal protobuf: %v", err)
+			t.Fatalf("protobuf marshal: %v", err)
 		}
-		if size != len(pb) {
-			t.Fatalf("marshal slice: expected size %d, got %d", len(pb), size)
+		if n != len(pbData) {
+			t.Fatalf("expected struct size %d, got %d", size, n)
 		}
-		if bytes.Compare(b, pb) != 0 {
-			t.Fatalf("marshal slice: expected bytes %q, got %q", pb, b)
+		if bytes.Compare(data, pbData) != 0 {
+			t.Fatalf("expected struct bytes %#v, got %#v", pbData, data)
 		}
 	}
 }
 
-func TestFixedSliceMarshal(t *testing.T) {
+func TestPointerStructMarshal(t *testing.T) {
 	t.Parallel()
 
-	for _, msg := range fixedSliceMessages {
-		size, err := Size(&msg)
-		if err != nil {
-			t.Fatalf("size fixed slice: %v", err)
-		}
-		b := make([]byte, size)
-		n, err := Marshal(b, &msg)
-		if err != nil {
-			t.Fatalf("marshal fixed slice: %v", err)
-		}
-		if n != size {
-			t.Fatalf("marshal fixed slice: expected size %d, got %d", size, n)
-		}
-
-		pbMsg := testproto.TestFixedSlice{
-			Float32Slice: msg.Float32Slice,
-			Float64Slice: msg.Float64Slice,
-		}
-		pb, err := proto.Marshal(&pbMsg)
-		if err != nil {
-			t.Fatalf("marshal protobuf: %v", err)
-		}
-		if size != len(pb) {
-			t.Fatalf("marshal fixed slice: expected size %d, got %d", len(pb), size)
-		}
-		if bytes.Compare(b, pb) != 0 {
-			t.Fatalf("marshal fixed slice: expected bytes %q, got %q", pb, b)
-		}
-	}
-}
-
-func TestEmbeddedMarshal(t *testing.T) {
-	t.Parallel()
-
-	for _, msg := range embeddedMessages {
-		size, err := Size(&msg)
-		if err != nil {
-			t.Fatalf("size embedded: %v", err)
-		}
-		b := make([]byte, size)
-		n, err := Marshal(b, &msg)
-		if err != nil {
-			t.Fatalf("marshal embedded: %v", err)
-		}
-		if n != size {
-			t.Fatalf("marshal embedded: expected size %d, got %d", size, n)
-		}
-
-		pbMsg := testproto.TestEmbedded{
-			Embedded1: &testproto.TestEmbedded_Embedded{
-				Uint32: &msg.Embedded1.Uint32,
-				Uint64: &msg.Embedded1.Uint64,
+	for _, m := range protoStruct {
+		pb := &testproto.ProtoStruct{
+			Struct1: &testproto.ProtoStruct_Struct{
+				Uint32: proto.Uint32(m.Struct1.Uint32),
+				Uint64: proto.Uint64(m.Struct1.Uint64),
 			},
-			Embedded2: &testproto.TestEmbedded_Embedded{
-				Uint32: &msg.Embedded2.Uint32,
-				Uint64: &msg.Embedded2.Uint64,
+			Struct2: &testproto.ProtoStruct_Struct{
+				Uint32: proto.Uint32(m.Struct2.Uint32),
+				Uint64: proto.Uint64(m.Struct2.Uint64),
 			},
 		}
-		pb, err := proto.Marshal(&pbMsg)
+
+		var b = struct {
+			Struct1 *pstruct
+			Struct2 *pstruct
+		}{Struct1: &m.Struct1, Struct2: &m.Struct2}
+
+		size := Size(&b)
+		data := make([]byte, size)
+		n := Marshal(data, &b)
+		if size != n {
+			t.Fatalf("expected struct size %d, got %d", size, n)
+		}
+
+		pbData, err := proto.Marshal(pb)
 		if err != nil {
-			t.Fatalf("marshal protobuf: %v", err)
+			t.Fatalf("protobuf marshal: %v", err)
 		}
-		if size != len(pb) {
-			t.Fatalf("marshal embedded: expected size %d, got %d", len(pb), size)
+		if n != len(pbData) {
+			t.Fatalf("expected struct size %d, got %d", size, n)
 		}
-		if bytes.Compare(b, pb) != 0 {
-			t.Fatalf("marshal embedded: expected bytes %q, got %q", pb, b)
+		if bytes.Compare(data, pbData) != 0 {
+			t.Fatalf("expected struct bytes %#v, got %#v", pbData, data)
 		}
 	}
 }

@@ -1,52 +1,37 @@
 package testproto;
 
-message TestUint {
-	required uint32 Uint32 = 1;
-	required uint64 Uint64 = 2;
+message ProtoTypes {
+	required uint32 Uint32  = 1;
+	required uint64 Uint64  = 2;
+	required int32 Int32    = 3;
+	required int64 Int64    = 4;
+	required float Float32  = 5;
+	required double Float64 = 6;
+	required bool Bool      = 7;
+	required string String  = 8;
 }
 
-message TestFixed {
-	required float Float32  = 1;
-	required double Float64 = 2;
-}
-
-message TestInt {
-	required int32 Int32 = 1;
-	required int64 Int64 = 2;
-}
-
-message TestBool {
-	required bool Bool = 1;
-}
-
-message TestBytes {
-	required string String = 1;
-	required bytes Bytes   = 2;
-}
-
-message TestSlice {
+message ProtoSlice {
 	repeated uint32 Uint32Slice  = 1;
 	repeated uint64 Uint64Slice  = 2;
 	repeated int32 Int32Slice    = 3;
 	repeated int64 Int64Slice    = 4;
-	repeated bool BoolSlice      = 5;
-	repeated string StringSlice  = 6;
+	repeated float Float32Slice  = 5;
+	repeated double Float64Slice = 6;
+	repeated bool BoolSlice      = 7;
+	repeated string StringSlice  = 8;
 }
 
-message TestByteSlice {
-	repeated bytes ByteSlice = 1;
+message ProtoBytes {
+	required bytes Bytes     = 1;
+	repeated bytes BytesSlice = 2;
 }
 
-message TestFixedSlice {
-	repeated float Float32Slice  = 1;
-	repeated double Float64Slice = 2;
-}
-
-message TestEmbedded {
-	message Embedded {
+message ProtoStruct {
+	message Struct {
 		required uint32 Uint32 = 1;
 		required uint64 Uint64 = 2;
 	}
-	required Embedded embedded1 = 1;
-	required Embedded embedded2 = 2;
+	required Struct Struct1 = 1;
+	required Struct Struct2 = 2;
 }

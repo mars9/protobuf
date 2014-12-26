@@ -89,11 +89,11 @@ func unmarshal(data []byte, val reflect.Value) (err error) {
 func unmarshalUvarint(val reflect.Value, v uint64) error {
 	switch val.Kind() {
 	case reflect.Int32, reflect.Int64:
-		return unmarshalInt(val, int64(v))
+		return setInt(val, int64(v))
 	case reflect.Uint32, reflect.Uint64:
-		return unmarshalUint(val, v)
+		return setUint(val, v)
 	case reflect.Bool:
-		return unmarshalBool(val, v)
+		return setBool(val, v)
 	case reflect.Slice:
 		return unmarshalUintSlice(val, v)
 	}
@@ -105,47 +105,19 @@ func unmarshalUintSlice(val reflect.Value, v uint64) error {
 	elem := reflect.New(vtype).Elem()
 	switch vtype.Kind() {
 	case reflect.Int32, reflect.Int64:
-		if err := unmarshalInt(elem, int64(v)); err != nil {
+		if err := setInt(elem, int64(v)); err != nil {
 			return err
 		}
 	case reflect.Uint32, reflect.Uint64:
-		if err := unmarshalUint(elem, v); err != nil {
+		if err := setUint(elem, v); err != nil {
 			return err
 		}
 	case reflect.Bool:
-		if err := unmarshalBool(elem, v); err != nil {
+		if err := setBool(elem, v); err != nil {
 			return err
 		}
 	}
 	val.Set(reflect.Append(val, elem))
-	return nil
-}
-
-func unmarshalUint(val reflect.Value, v uint64) error {
-	if val.OverflowUint(v) {
-		return errors.New("uint overflow")
-	}
-	val.SetUint(v)
-	return nil
-}
-
-func unmarshalInt(val reflect.Value, v int64) error {
-	if val.OverflowInt(v) {
-		return errors.New("uint overflow")
-	}
-	val.SetInt(v)
-	return nil
-}
-
-func unmarshalBool(val reflect.Value, v uint64) error {
-	if v != 0 && v != 1 {
-		return errors.New("invalid bool value")
-	}
-	if v == 0 {
-		val.SetBool(false)
-	} else {
-		val.SetBool(true)
-	}
 	return nil
 }
 
@@ -231,6 +203,34 @@ func unmarshalBytes(val reflect.Value, b []byte) error {
 			val.Set(reflect.New(val.Type().Elem()))
 		}
 		return unmarshal(b, val.Elem())
+	}
+	return nil
+}
+
+func setUint(val reflect.Value, v uint64) error {
+	if val.OverflowUint(v) {
+		return errors.New("uint overflow")
+	}
+	val.SetUint(v)
+	return nil
+}
+
+func setInt(val reflect.Value, v int64) error {
+	if val.OverflowInt(v) {
+		return errors.New("uint overflow")
+	}
+	val.SetInt(v)
+	return nil
+}
+
+func setBool(val reflect.Value, v uint64) error {
+	if v != 0 && v != 1 {
+		return errors.New("invalid bool value")
+	}
+	if v == 0 {
+		val.SetBool(false)
+	} else {
+		val.SetBool(true)
 	}
 	return nil
 }
