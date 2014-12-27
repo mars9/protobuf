@@ -23,7 +23,7 @@ message ProtoSlice {
 }
 
 message ProtoBytes {
-	required bytes Bytes     = 1;
+	required bytes Bytes      = 1;
 	repeated bytes BytesSlice = 2;
 }
 
@@ -34,4 +34,18 @@ message ProtoStruct {
 	}
 	required Struct Struct1 = 1;
 	required Struct Struct2 = 2;
+}
+
+message ProtoTags {
+	required sfixed32 Sfixed32 = 1;
+	required sfixed64 Sfixed64 = 2;
+	required fixed32 Fixed32   = 3;
+	required fixed64 Fixed64   = 4;
+}
+
+message ProtoTagsSlice {
+	repeated sfixed32 Sfixed32Slice = 1;
+	repeated sfixed64 Sfixed64Slice = 2;
+	repeated fixed32 Fixed32Slice   = 3;
+	repeated fixed64 Fixed64Slice   = 4;
 }

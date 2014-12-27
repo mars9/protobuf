@@ -118,6 +118,7 @@ func unmarshalBytes(val reflect.Value, b []byte) error {
 	return nil
 }
 
+// TODO: handle tags
 func unmarshalFixed32(val reflect.Value, v uint32) error {
 	switch val.Kind() {
 	case reflect.Float32:
@@ -137,6 +138,7 @@ func unmarshalFixed32(val reflect.Value, v uint32) error {
 	return nil
 }
 
+// TODO: handle tags
 func unmarshalFixed32Slice(val reflect.Value, v uint32) error {
 	vtype := val.Type().Elem()
 	elem := reflect.New(vtype).Elem()
@@ -150,6 +152,7 @@ func unmarshalFixed32Slice(val reflect.Value, v uint32) error {
 	return nil
 }
 
+// TODO: handle tags
 func unmarshalFixed64(val reflect.Value, v uint64) error {
 	switch val.Kind() {
 	case reflect.Float64:
@@ -169,6 +172,7 @@ func unmarshalFixed64(val reflect.Value, v uint64) error {
 	return nil
 }
 
+// TODO: handle tags
 func unmarshalFixed64Slice(val reflect.Value, v uint64) error {
 	vtype := val.Type().Elem()
 	elem := reflect.New(vtype).Elem()

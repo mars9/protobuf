@@ -5,6 +5,7 @@ import "strings"
 const (
 	optional = iota + 1
 	required
+	repeated
 
 	ftypeStart
 	sfixed32
@@ -16,8 +17,9 @@ const (
 	ftypeEnd
 )
 
-// `protobuf:"fixed64,required"`
-// `protobuf:"fixed64,optional"`
+// `protobuf:"fixed64,required"`, `protobuf:"fixed64,req"`
+// `protobuf:"fixed64,optional"`, `protobuf:"fixed64,opt"`
+// `protobuf:"fixed64,repeated"`, `protobuf:"fixed64,rep"`
 func parseTag(tag string) (typ, field int) {
 	fields := strings.Split(tag, ",")
 	for i := range fields {
@@ -34,10 +36,12 @@ func parseTag(tag string) (typ, field int) {
 			typ = fixed32
 		case "sfixed32":
 			typ = sfixed32
-		case "optional":
+		case "optional", "opt":
 			field = optional
-		case "required":
+		case "required", "req":
 			field = required
+		case "repeated", "rep":
+			field = repeated
 		}
 	}
 	return typ, field

@@ -19,6 +19,13 @@ var protoSliceMarshal = struct {
 	StringSlice  []string
 }{}
 
+var protoTagsSliceMarshal = struct {
+	Sfixed32Slice []int32  `protobuf:"sfixed32,repeated"`
+	Sfixed64Slice []int64  `protobuf:"sfixed64,repeated"`
+	Fixed32Slice  []uint32 `protobuf:"fixed32,repeated"`
+	Fixed64Slice  []uint64 `protobuf:"fixed64,repeated"`
+}{}
+
 func init() {
 	for _, m := range protoTypes {
 		protoSliceMarshal.Uint32Slice = append(protoSliceMarshal.Uint32Slice, m.Uint32)
@@ -29,6 +36,12 @@ func init() {
 		protoSliceMarshal.Float64Slice = append(protoSliceMarshal.Float64Slice, m.Float64)
 		protoSliceMarshal.BoolSlice = append(protoSliceMarshal.BoolSlice, m.Bool)
 		protoSliceMarshal.StringSlice = append(protoSliceMarshal.StringSlice, m.String)
+	}
+	for _, m := range protoTags {
+		protoTagsSliceMarshal.Sfixed32Slice = append(protoTagsSliceMarshal.Sfixed32Slice, m.Sfixed32)
+		protoTagsSliceMarshal.Sfixed64Slice = append(protoTagsSliceMarshal.Sfixed64Slice, m.Sfixed64)
+		protoTagsSliceMarshal.Fixed32Slice = append(protoTagsSliceMarshal.Fixed32Slice, m.Fixed32)
+		protoTagsSliceMarshal.Fixed64Slice = append(protoTagsSliceMarshal.Fixed64Slice, m.Fixed64)
 	}
 }
 
@@ -255,5 +268,66 @@ func TestPointerStructMarshal(t *testing.T) {
 		if bytes.Compare(data, pbData) != 0 {
 			t.Fatalf("expected struct bytes %#v, got %#v", pbData, data)
 		}
+	}
+}
+
+func TestTagsMarshal(t *testing.T) {
+	t.Parallel()
+
+	for _, m := range protoTags {
+		pb := &testproto.ProtoTags{
+			Sfixed32: proto.Int32(m.Sfixed32),
+			Sfixed64: proto.Int64(m.Sfixed64),
+			Fixed32:  proto.Uint32(m.Fixed32),
+			Fixed64:  proto.Uint64(m.Fixed64),
+		}
+
+		size := Size(&m)
+		data := make([]byte, size)
+		n := Marshal(data, &m)
+		if size != n {
+			t.Fatalf("expected tag size %d, got %d", size, n)
+		}
+
+		pbData, err := proto.Marshal(pb)
+		if err != nil {
+			t.Fatalf("protobuf marshal: %v", err)
+		}
+		if n != len(pbData) {
+			t.Fatalf("expected tag size %d, got %d", size, n)
+		}
+		if bytes.Compare(data, pbData) != 0 {
+			t.Fatalf("expected tag bytes %#v, got %#v", pbData, data)
+		}
+
+	}
+}
+
+func TestTagsSliceMarshal(t *testing.T) {
+	t.Parallel()
+
+	pb := &testproto.ProtoTagsSlice{
+		Sfixed32Slice: protoTagsSliceMarshal.Sfixed32Slice,
+		Sfixed64Slice: protoTagsSliceMarshal.Sfixed64Slice,
+		Fixed32Slice:  protoTagsSliceMarshal.Fixed32Slice,
+		Fixed64Slice:  protoTagsSliceMarshal.Fixed64Slice,
+	}
+
+	size := Size(&protoTagsSliceMarshal)
+	data := make([]byte, size)
+	n := Marshal(data, &protoTagsSliceMarshal)
+	if size != n {
+		t.Fatalf("expected tags slice size %d, got %d", size, n)
+	}
+
+	pbData, err := proto.Marshal(pb)
+	if err != nil {
+		t.Fatalf("protobuf marshal: %v", err)
+	}
+	if n != len(pbData) {
+		t.Fatalf("expected tags slice size %d, got %d", size, n)
+	}
+	if bytes.Compare(data, pbData) != 0 {
+		t.Fatalf("expected tags slice bytes %#v, got %#v", pbData, data)
 	}
 }

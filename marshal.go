@@ -32,9 +32,17 @@ func Marshal(data []byte, v interface{}) (n int) {
 
 func marshalStruct(data []byte, val reflect.Value) (n int) {
 	num := val.NumField()
+	var ftype int
+
 	for i := 0; i < num; i++ {
 		field := val.Field(i)
 		if !field.CanSet() {
+			continue
+		}
+
+		ftype, _ = parseTag(val.Type().Field(i).Tag.Get("protobuf"))
+		if ftype > ftypeStart && ftype < ftypeEnd {
+			n += marshalTag(ftype, data[n:], i+1, field)
 			continue
 		}
 
@@ -68,6 +76,56 @@ func marshalStruct(data []byte, val reflect.Value) (n int) {
 	return n
 }
 
+func marshalTag(ftype int, data []byte, key int, val reflect.Value) (n int) {
+	switch ftype {
+	case sfixed32:
+		switch val.Kind() {
+		case reflect.Int32:
+			n += putFixed32(data, key, uint32(val.Int()))
+		case reflect.Slice:
+			vlen := val.Len()
+			for i := 0; i < vlen; i++ {
+				n += putFixed32(data[n:], key, uint32(val.Index(i).Int()))
+			}
+		}
+	case sfixed64:
+		switch val.Kind() {
+		case reflect.Int64:
+			n += putFixed64(data, key, uint64(val.Int()))
+		case reflect.Slice:
+			vlen := val.Len()
+			for i := 0; i < vlen; i++ {
+				n += putFixed64(data[n:], key, uint64(val.Index(i).Int()))
+			}
+		}
+	case fixed32:
+		switch val.Kind() {
+		case reflect.Uint32:
+			n += putFixed32(data, key, uint32(val.Uint()))
+		case reflect.Slice:
+			vlen := val.Len()
+			for i := 0; i < vlen; i++ {
+				n += putFixed32(data[n:], key, uint32(val.Index(i).Uint()))
+			}
+		}
+	case fixed64:
+		switch val.Kind() {
+		case reflect.Uint64:
+			n += putFixed64(data, key, val.Uint())
+		case reflect.Slice:
+			vlen := val.Len()
+			for i := 0; i < vlen; i++ {
+				n += putFixed64(data[n:], key, val.Index(i).Uint())
+			}
+		}
+	case sint32:
+		// TODO
+	case sint64:
+		// TODO
+	}
+	return n
+}
+
 func marshalSlice(data []byte, key int, val reflect.Value) (n int) {
 	vlen := val.Len()
 	switch val.Type().Elem().Kind() {
@@ -83,13 +141,13 @@ func marshalSlice(data []byte, key int, val reflect.Value) (n int) {
 		var x uint32
 		for i := 0; i < vlen; i++ {
 			x = math.Float32bits(float32(val.Index(i).Float()))
-			n += putFloat32(data[n:], key, x)
+			n += putFixed32(data[n:], key, x)
 		}
 	case reflect.Float64:
 		var x uint64
 		for i := 0; i < vlen; i++ {
 			x = math.Float64bits(val.Index(i).Float())
-			n += putFloat64(data[n:], key, x)
+			n += putFixed64(data[n:], key, x)
 		}
 	case reflect.Bool:
 		for i := 0; i < vlen; i++ {
@@ -120,10 +178,10 @@ func marshalType(data []byte, key int, val reflect.Value) (n int) {
 		n += putUint(data[n:], key, val.Uint())
 	case reflect.Float32:
 		x := math.Float32bits(float32(val.Float()))
-		n += putFloat32(data[n:], key, x)
+		n += putFixed32(data[n:], key, x)
 	case reflect.Float64:
 		x := math.Float64bits(val.Float())
-		n += putFloat64(data[n:], key, x)
+		n += putFixed64(data[n:], key, x)
 	case reflect.Bool:
 		n += putBool(data[n:], key, val.Bool())
 	case reflect.String:
@@ -138,13 +196,13 @@ func putUint(data []byte, key int, v uint64) (n int) {
 	return n
 }
 
-func putFloat32(data []byte, key int, v uint32) (n int) {
+func putFixed32(data []byte, key int, v uint32) (n int) {
 	data[n], n = byte(key)<<3|wireFixed32, n+1
 	binary.LittleEndian.PutUint32(data[n:], v)
 	return n + 4
 }
 
-func putFloat64(data []byte, key int, v uint64) (n int) {
+func putFixed64(data []byte, key int, v uint64) (n int) {
 	data[n], n = byte(key)<<3|wireFixed64, n+1
 	binary.LittleEndian.PutUint64(data[n:], v)
 	return n + 8

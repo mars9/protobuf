@@ -13,6 +13,8 @@ It has these top-level messages:
 	ProtoSlice
 	ProtoBytes
 	ProtoStruct
+	ProtoTags
+	ProtoTagsSlice
 */
 package testproto
 
@@ -237,6 +239,86 @@ func (m *ProtoStruct_Struct) GetUint64() uint64 {
 		return *m.Uint64
 	}
 	return 0
+}
+
+type ProtoTags struct {
+	Sfixed32         *int32  `protobuf:"fixed32,1,req" json:"Sfixed32,omitempty"`
+	Sfixed64         *int64  `protobuf:"fixed64,2,req" json:"Sfixed64,omitempty"`
+	Fixed32          *uint32 `protobuf:"fixed32,3,req" json:"Fixed32,omitempty"`
+	Fixed64          *uint64 `protobuf:"fixed64,4,req" json:"Fixed64,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *ProtoTags) Reset()         { *m = ProtoTags{} }
+func (m *ProtoTags) String() string { return proto.CompactTextString(m) }
+func (*ProtoTags) ProtoMessage()    {}
+
+func (m *ProtoTags) GetSfixed32() int32 {
+	if m != nil && m.Sfixed32 != nil {
+		return *m.Sfixed32
+	}
+	return 0
+}
+
+func (m *ProtoTags) GetSfixed64() int64 {
+	if m != nil && m.Sfixed64 != nil {
+		return *m.Sfixed64
+	}
+	return 0
+}
+
+func (m *ProtoTags) GetFixed32() uint32 {
+	if m != nil && m.Fixed32 != nil {
+		return *m.Fixed32
+	}
+	return 0
+}
+
+func (m *ProtoTags) GetFixed64() uint64 {
+	if m != nil && m.Fixed64 != nil {
+		return *m.Fixed64
+	}
+	return 0
+}
+
+type ProtoTagsSlice struct {
+	Sfixed32Slice    []int32  `protobuf:"fixed32,1,rep" json:"Sfixed32Slice,omitempty"`
+	Sfixed64Slice    []int64  `protobuf:"fixed64,2,rep" json:"Sfixed64Slice,omitempty"`
+	Fixed32Slice     []uint32 `protobuf:"fixed32,3,rep" json:"Fixed32Slice,omitempty"`
+	Fixed64Slice     []uint64 `protobuf:"fixed64,4,rep" json:"Fixed64Slice,omitempty"`
+	XXX_unrecognized []byte   `json:"-"`
+}
+
+func (m *ProtoTagsSlice) Reset()         { *m = ProtoTagsSlice{} }
+func (m *ProtoTagsSlice) String() string { return proto.CompactTextString(m) }
+func (*ProtoTagsSlice) ProtoMessage()    {}
+
+func (m *ProtoTagsSlice) GetSfixed32Slice() []int32 {
+	if m != nil {
+		return m.Sfixed32Slice
+	}
+	return nil
+}
+
+func (m *ProtoTagsSlice) GetSfixed64Slice() []int64 {
+	if m != nil {
+		return m.Sfixed64Slice
+	}
+	return nil
+}
+
+func (m *ProtoTagsSlice) GetFixed32Slice() []uint32 {
+	if m != nil {
+		return m.Fixed32Slice
+	}
+	return nil
+}
+
+func (m *ProtoTagsSlice) GetFixed64Slice() []uint64 {
+	if m != nil {
+		return m.Fixed64Slice
+	}
+	return nil
 }
 
 func init() {

@@ -14,9 +14,17 @@ func Size(v interface{}) (n int) {
 
 func sizeStruct(val reflect.Value) (n int) {
 	num := val.NumField()
+	var ftype int
+
 	for i := 0; i < num; i++ {
 		field := val.Field(i)
 		if !field.CanSet() {
+			continue
+		}
+
+		ftype, _ = parseTag(val.Type().Field(i).Tag.Get("protobuf"))
+		if ftype > ftypeStart && ftype < ftypeEnd {
+			n += sizeTag(ftype, field)
 			continue
 		}
 
@@ -42,6 +50,36 @@ func sizeStruct(val reflect.Value) (n int) {
 		default:
 			n += sizeType(field)
 		}
+	}
+	return n
+}
+
+func sizeTag(ftype int, val reflect.Value) (n int) {
+	switch ftype {
+	case sfixed32, fixed32:
+		switch val.Kind() {
+		case reflect.Int32, reflect.Uint32:
+			n += 5
+		case reflect.Slice:
+			vlen := val.Len()
+			for i := 0; i < vlen; i++ {
+				n += 5
+			}
+		}
+	case sfixed64, fixed64:
+		switch val.Kind() {
+		case reflect.Int64, reflect.Uint64:
+			n += 9
+		case reflect.Slice:
+			vlen := val.Len()
+			for i := 0; i < vlen; i++ {
+				n += 9
+			}
+		}
+	case sint32:
+		// TODO
+	case sint64:
+		// TODO
 	}
 	return n
 }
