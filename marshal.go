@@ -82,6 +82,8 @@ func marshalTag(ftype int, data []byte, key int, val reflect.Value) (n int) {
 		switch val.Kind() {
 		case reflect.Int32:
 			n += putFixed32(data, key, uint32(val.Int()))
+		case reflect.Ptr:
+			n += marshalTag(ftype, data, key, val.Elem())
 		case reflect.Slice:
 			vlen := val.Len()
 			for i := 0; i < vlen; i++ {
@@ -92,6 +94,8 @@ func marshalTag(ftype int, data []byte, key int, val reflect.Value) (n int) {
 		switch val.Kind() {
 		case reflect.Int64:
 			n += putFixed64(data, key, uint64(val.Int()))
+		case reflect.Ptr:
+			n += marshalTag(ftype, data, key, val.Elem())
 		case reflect.Slice:
 			vlen := val.Len()
 			for i := 0; i < vlen; i++ {
@@ -102,6 +106,8 @@ func marshalTag(ftype int, data []byte, key int, val reflect.Value) (n int) {
 		switch val.Kind() {
 		case reflect.Uint32:
 			n += putFixed32(data, key, uint32(val.Uint()))
+		case reflect.Ptr:
+			n += marshalTag(ftype, data, key, val.Elem())
 		case reflect.Slice:
 			vlen := val.Len()
 			for i := 0; i < vlen; i++ {
@@ -112,6 +118,8 @@ func marshalTag(ftype int, data []byte, key int, val reflect.Value) (n int) {
 		switch val.Kind() {
 		case reflect.Uint64:
 			n += putFixed64(data, key, val.Uint())
+		case reflect.Ptr:
+			n += marshalTag(ftype, data, key, val.Elem())
 		case reflect.Slice:
 			vlen := val.Len()
 			for i := 0; i < vlen; i++ {
@@ -173,19 +181,19 @@ func marshalSlice(data []byte, key int, val reflect.Value) (n int) {
 func marshalType(data []byte, key int, val reflect.Value) (n int) {
 	switch val.Kind() {
 	case reflect.Int32, reflect.Int64:
-		n += putUint(data[n:], key, uint64(val.Int()))
+		n += putUint(data, key, uint64(val.Int()))
 	case reflect.Uint32, reflect.Uint64:
-		n += putUint(data[n:], key, val.Uint())
+		n += putUint(data, key, val.Uint())
 	case reflect.Float32:
 		x := math.Float32bits(float32(val.Float()))
-		n += putFixed32(data[n:], key, x)
+		n += putFixed32(data, key, x)
 	case reflect.Float64:
 		x := math.Float64bits(val.Float())
-		n += putFixed64(data[n:], key, x)
+		n += putFixed64(data, key, x)
 	case reflect.Bool:
-		n += putBool(data[n:], key, val.Bool())
+		n += putBool(data, key, val.Bool())
 	case reflect.String:
-		n += putString(data[n:], key, val.String())
+		n += putString(data, key, val.String())
 	}
 	return n
 }

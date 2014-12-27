@@ -270,6 +270,36 @@ func TestTagsSize(t *testing.T) {
 	}
 }
 
+func TestPointerTagsSize(t *testing.T) {
+	t.Parallel()
+
+	for _, m := range protoTags {
+		pb := &testproto.ProtoTags{
+			Sfixed32: proto.Int32(m.Sfixed32),
+			Sfixed64: proto.Int64(m.Sfixed64),
+			Fixed32:  proto.Uint32(m.Fixed32),
+			Fixed64:  proto.Uint64(m.Fixed64),
+		}
+
+		var v = struct {
+			Sfixed32 *int32  `protobuf:"sfixed32,required"`
+			Sfixed64 *int64  `protobuf:"sfixed64,required"`
+			Fixed32  *uint32 `protobuf:"fixed32,required"`
+			Fixed64  *uint64 `protobuf:"fixed64,required"`
+		}{
+			Sfixed32: &m.Sfixed32,
+			Sfixed64: &m.Sfixed64,
+			Fixed32:  &m.Fixed32,
+			Fixed64:  &m.Fixed64,
+		}
+		pbSize := proto.Size(pb)
+		size := Size(&v)
+		if pbSize != size {
+			t.Fatalf("expected pointer tag size %d, got %d", pbSize, size)
+		}
+	}
+}
+
 func TestTagsSliceSize(t *testing.T) {
 	t.Parallel()
 

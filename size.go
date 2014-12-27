@@ -60,6 +60,8 @@ func sizeTag(ftype int, val reflect.Value) (n int) {
 		switch val.Kind() {
 		case reflect.Int32, reflect.Uint32:
 			n += 5
+		case reflect.Ptr:
+			n += sizeTag(ftype, val.Elem())
 		case reflect.Slice:
 			vlen := val.Len()
 			for i := 0; i < vlen; i++ {
@@ -70,6 +72,8 @@ func sizeTag(ftype int, val reflect.Value) (n int) {
 		switch val.Kind() {
 		case reflect.Int64, reflect.Uint64:
 			n += 9
+		case reflect.Ptr:
+			n += sizeTag(ftype, val.Elem())
 		case reflect.Slice:
 			vlen := val.Len()
 			for i := 0; i < vlen; i++ {
