@@ -55,10 +55,10 @@ func unmarshal(data []byte, val reflect.Value) (err error) {
 			if n <= 0 {
 				return errors.New("invalid varint value")
 			}
-			data = data[n:]
 			if err = unmarshalUvarint(field, v); err != nil {
 				return err
 			}
+			data = data[n:]
 		case wireFixed32:
 			v := binary.LittleEndian.Uint32(data)
 			if err = unmarshalFixed32(field, v); err != nil {
@@ -84,95 +84,6 @@ func unmarshal(data []byte, val reflect.Value) (err error) {
 		}
 	}
 	return err
-}
-
-func unmarshalUvarint(val reflect.Value, v uint64) error {
-	switch val.Kind() {
-	case reflect.Int32, reflect.Int64:
-		return setInt(val, int64(v))
-	case reflect.Uint32, reflect.Uint64:
-		return setUint(val, v)
-	case reflect.Bool:
-		return setBool(val, v)
-	case reflect.Slice:
-		return unmarshalUintSlice(val, v)
-	}
-	return nil
-}
-
-func unmarshalUintSlice(val reflect.Value, v uint64) error {
-	vtype := val.Type().Elem()
-	elem := reflect.New(vtype).Elem()
-	switch vtype.Kind() {
-	case reflect.Int32, reflect.Int64:
-		if err := setInt(elem, int64(v)); err != nil {
-			return err
-		}
-	case reflect.Uint32, reflect.Uint64:
-		if err := setUint(elem, v); err != nil {
-			return err
-		}
-	case reflect.Bool:
-		if err := setBool(elem, v); err != nil {
-			return err
-		}
-	}
-	val.Set(reflect.Append(val, elem))
-	return nil
-}
-
-func unmarshalFixed32(val reflect.Value, v uint32) error {
-	switch val.Kind() {
-	case reflect.Float32:
-		x := float64(math.Float32frombits(v))
-		if val.OverflowFloat(float64(x)) {
-			return errors.New("float32 overflow")
-		}
-		val.SetFloat(float64(x))
-	case reflect.Slice:
-		return unmarshalFixed32Slice(val, v)
-	}
-	return nil
-}
-
-func unmarshalFixed32Slice(val reflect.Value, v uint32) error {
-	vtype := val.Type().Elem()
-	elem := reflect.New(vtype).Elem()
-	switch vtype.Kind() {
-	case reflect.Float32:
-		if err := unmarshalFixed32(elem, v); err != nil {
-			return err
-		}
-	}
-	val.Set(reflect.Append(val, elem))
-	return nil
-}
-
-func unmarshalFixed64(val reflect.Value, v uint64) error {
-	switch val.Kind() {
-	case reflect.Float64:
-		x := math.Float64frombits(v)
-		if val.OverflowFloat(x) {
-			return errors.New("float64 overflow")
-		}
-		val.SetFloat(x)
-	case reflect.Slice:
-		return unmarshalFixed64Slice(val, v)
-	}
-	return nil
-}
-
-func unmarshalFixed64Slice(val reflect.Value, v uint64) error {
-	vtype := val.Type().Elem()
-	elem := reflect.New(vtype).Elem()
-	switch vtype.Kind() {
-	case reflect.Float64:
-		if err := unmarshalFixed64(elem, v); err != nil {
-			return err
-		}
-	}
-	val.Set(reflect.Append(val, elem))
-	return nil
 }
 
 func unmarshalBytes(val reflect.Value, b []byte) error {
@@ -202,8 +113,112 @@ func unmarshalBytes(val reflect.Value, b []byte) error {
 		if val.IsNil() {
 			val.Set(reflect.New(val.Type().Elem()))
 		}
-		return unmarshal(b, val.Elem())
+		return unmarshalBytes(val.Elem(), b)
 	}
+	return nil
+}
+
+func unmarshalFixed32(val reflect.Value, v uint32) error {
+	switch val.Kind() {
+	case reflect.Float32:
+		x := float64(math.Float32frombits(v))
+		if val.OverflowFloat(float64(x)) {
+			return errors.New("float32 overflow")
+		}
+		val.SetFloat(float64(x))
+	case reflect.Ptr:
+		if val.IsNil() {
+			val.Set(reflect.New(val.Type().Elem()))
+		}
+		return unmarshalFixed32(val.Elem(), v)
+	case reflect.Slice:
+		return unmarshalFixed32Slice(val, v)
+	}
+	return nil
+}
+
+func unmarshalFixed32Slice(val reflect.Value, v uint32) error {
+	vtype := val.Type().Elem()
+	elem := reflect.New(vtype).Elem()
+	switch vtype.Kind() {
+	case reflect.Float32:
+		if err := unmarshalFixed32(elem, v); err != nil {
+			return err
+		}
+	}
+	val.Set(reflect.Append(val, elem))
+	return nil
+}
+
+func unmarshalFixed64(val reflect.Value, v uint64) error {
+	switch val.Kind() {
+	case reflect.Float64:
+		x := math.Float64frombits(v)
+		if val.OverflowFloat(x) {
+			return errors.New("float64 overflow")
+		}
+		val.SetFloat(x)
+	case reflect.Ptr:
+		if val.IsNil() {
+			val.Set(reflect.New(val.Type().Elem()))
+		}
+		return unmarshalFixed64(val.Elem(), v)
+	case reflect.Slice:
+		return unmarshalFixed64Slice(val, v)
+	}
+	return nil
+}
+
+func unmarshalFixed64Slice(val reflect.Value, v uint64) error {
+	vtype := val.Type().Elem()
+	elem := reflect.New(vtype).Elem()
+	switch vtype.Kind() {
+	case reflect.Float64:
+		if err := unmarshalFixed64(elem, v); err != nil {
+			return err
+		}
+	}
+	val.Set(reflect.Append(val, elem))
+	return nil
+}
+
+func unmarshalUvarint(val reflect.Value, v uint64) error {
+	switch val.Kind() {
+	case reflect.Int32, reflect.Int64:
+		return setInt(val, int64(v))
+	case reflect.Uint32, reflect.Uint64:
+		return setUint(val, v)
+	case reflect.Bool:
+		return setBool(val, v)
+	case reflect.Ptr:
+		if val.IsNil() {
+			val.Set(reflect.New(val.Type().Elem()))
+		}
+		return unmarshalUvarint(val.Elem(), v)
+	case reflect.Slice:
+		return unmarshalUintSlice(val, v)
+	}
+	return nil
+}
+
+func unmarshalUintSlice(val reflect.Value, v uint64) error {
+	vtype := val.Type().Elem()
+	elem := reflect.New(vtype).Elem()
+	switch vtype.Kind() {
+	case reflect.Int32, reflect.Int64:
+		if err := setInt(elem, int64(v)); err != nil {
+			return err
+		}
+	case reflect.Uint32, reflect.Uint64:
+		if err := setUint(elem, v); err != nil {
+			return err
+		}
+	case reflect.Bool:
+		if err := setBool(elem, v); err != nil {
+			return err
+		}
+	}
+	val.Set(reflect.Append(val, elem))
 	return nil
 }
 
