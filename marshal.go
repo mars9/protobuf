@@ -4,6 +4,7 @@ package protobuf
 
 import (
 	"encoding/binary"
+	"errors"
 	"math"
 	"reflect"
 )
@@ -22,7 +23,7 @@ const (
 // distinction between 'required' and 'optional' fields. Marshal ignores
 // unsupported struct field types. If the buffer is too small, Marshal
 // will panic.
-func Marshal(data []byte, v interface{}) (n int) {
+func Marshal(data []byte, v interface{}) (n int, err error) {
 	val := reflect.ValueOf(v)
 	if val.Kind() != reflect.Ptr && val.Elem().Kind() != reflect.Struct {
 		panic("v must be a pointer to a struct")
@@ -30,9 +31,9 @@ func Marshal(data []byte, v interface{}) (n int) {
 	return marshalStruct(data, val.Elem())
 }
 
-func marshalStruct(data []byte, val reflect.Value) (n int) {
+func marshalStruct(data []byte, val reflect.Value) (n int, err error) {
 	num := val.NumField()
-	var ftype int
+	var ftype, fopt int
 
 	for i := 0; i < num; i++ {
 		field := val.Field(i)
@@ -40,9 +41,13 @@ func marshalStruct(data []byte, val reflect.Value) (n int) {
 			continue
 		}
 
-		ftype, _ = parseTag(val.Type().Field(i).Tag.Get("protobuf"))
+		ftype, fopt = parseTag(val.Type().Field(i).Tag.Get("protobuf"))
 		if ftype > ftypeStart && ftype < ftypeEnd {
-			n += marshalTag(ftype, data[n:], i+1, field)
+			m, err := marshalTag(ftype, fopt, data[n:], i+1, field)
+			if err != nil {
+				return n + m, err
+			}
+			n += m
 			continue
 		}
 
@@ -51,15 +56,27 @@ func marshalStruct(data []byte, val reflect.Value) (n int) {
 			m := sizeStruct(field)
 			data[n], n = byte(i+1)<<3|wireBytes, n+1
 			n += binary.PutUvarint(data[n:], uint64(m))
-			n += marshalStruct(data[n:], field)
+			m, err = marshalStruct(data[n:], field)
+			if err != nil {
+				return n + m, err
+			}
+			n += m
 		case reflect.Ptr:
+			if fopt == required && field.IsNil() {
+				return n, errors.New("required field not set")
+			}
+
 			v := field.Elem()
 			switch v.Kind() {
 			case reflect.Struct:
 				m := sizeStruct(field.Elem())
 				data[n], n = byte(i+1)<<3|wireBytes, n+1
 				n += binary.PutUvarint(data[n:], uint64(m))
-				n += marshalStruct(data[n:], field.Elem())
+				m, err = marshalStruct(data[n:], field.Elem())
+				if err != nil {
+					return n + m, err
+				}
+				n += m
 			case reflect.Ptr:
 				// nothing
 			case reflect.Slice:
@@ -73,17 +90,26 @@ func marshalStruct(data []byte, val reflect.Value) (n int) {
 			n += marshalType(data[n:], i+1, field)
 		}
 	}
-	return n
+	return n, err
 }
 
-func marshalTag(ftype int, data []byte, key int, val reflect.Value) (n int) {
+func marshalTag(ftype, fopt int, data []byte, key int, val reflect.Value) (n int, err error) {
+	if val.Kind() == reflect.Ptr {
+		if fopt == required && val.IsNil() {
+			return n, errors.New("required field not set")
+		}
+		m, err := marshalTag(ftype, fopt, data, key, val.Elem())
+		if err != nil {
+			return n + m, err
+		}
+		n += m
+	}
+
 	switch ftype {
 	case sfixed32:
 		switch val.Kind() {
 		case reflect.Int32:
 			n += putFixed32(data, key, uint32(val.Int()))
-		case reflect.Ptr:
-			n += marshalTag(ftype, data, key, val.Elem())
 		case reflect.Slice:
 			vlen := val.Len()
 			for i := 0; i < vlen; i++ {
@@ -94,8 +120,6 @@ func marshalTag(ftype int, data []byte, key int, val reflect.Value) (n int) {
 		switch val.Kind() {
 		case reflect.Int64:
 			n += putFixed64(data, key, uint64(val.Int()))
-		case reflect.Ptr:
-			n += marshalTag(ftype, data, key, val.Elem())
 		case reflect.Slice:
 			vlen := val.Len()
 			for i := 0; i < vlen; i++ {
@@ -106,8 +130,6 @@ func marshalTag(ftype int, data []byte, key int, val reflect.Value) (n int) {
 		switch val.Kind() {
 		case reflect.Uint32:
 			n += putFixed32(data, key, uint32(val.Uint()))
-		case reflect.Ptr:
-			n += marshalTag(ftype, data, key, val.Elem())
 		case reflect.Slice:
 			vlen := val.Len()
 			for i := 0; i < vlen; i++ {
@@ -118,8 +140,6 @@ func marshalTag(ftype int, data []byte, key int, val reflect.Value) (n int) {
 		switch val.Kind() {
 		case reflect.Uint64:
 			n += putFixed64(data, key, val.Uint())
-		case reflect.Ptr:
-			n += marshalTag(ftype, data, key, val.Elem())
 		case reflect.Slice:
 			vlen := val.Len()
 			for i := 0; i < vlen; i++ {
@@ -131,7 +151,7 @@ func marshalTag(ftype int, data []byte, key int, val reflect.Value) (n int) {
 	case sint64:
 		// TODO
 	}
-	return n
+	return n, err
 }
 
 func marshalSlice(data []byte, key int, val reflect.Value) (n int) {

@@ -1,3 +1,5 @@
+// +build goprotobuf
+
 package protobuf
 
 import (

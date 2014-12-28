@@ -1,3 +1,5 @@
+// +build goprotobuf
+
 package protobuf
 
 import (
@@ -62,7 +64,10 @@ func TestTypesMarshal(t *testing.T) {
 
 		size := Size(&m)
 		data := make([]byte, size)
-		n := Marshal(data, &m)
+		n, err := Marshal(data, &m)
+		if err != nil {
+			t.Fatalf("marshal: %v", err)
+		}
 		if size != n {
 			t.Fatalf("expected type size %d, got %d", size, n)
 		}
@@ -116,7 +121,10 @@ func TestPointerTypeMarshal(t *testing.T) {
 
 		size := Size(&b)
 		data := make([]byte, size)
-		n := Marshal(data, &b)
+		n, err := Marshal(data, &b)
+		if err != nil {
+			t.Fatalf("marshal: %v", err)
+		}
 		if size != n {
 			t.Fatalf("expected pointer type size %d, got %d", size, n)
 		}
@@ -145,7 +153,10 @@ func TestByteSliceMarshal(t *testing.T) {
 
 		size := Size(&m)
 		data := make([]byte, size)
-		n := Marshal(data, &m)
+		n, err := Marshal(data, &m)
+		if err != nil {
+			t.Fatalf("marshal: %v", err)
+		}
 		if size != n {
 			t.Fatalf("expected bytes size %d, got %d", size, n)
 		}
@@ -179,7 +190,10 @@ func TestSliceMarshal(t *testing.T) {
 
 	size := Size(&protoSliceMarshal)
 	data := make([]byte, size)
-	n := Marshal(data, &protoSliceMarshal)
+	n, err := Marshal(data, &protoSliceMarshal)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
 	if size != n {
 		t.Fatalf("expected slice size %d, got %d", size, n)
 	}
@@ -213,7 +227,10 @@ func TestStructMarshal(t *testing.T) {
 
 		size := Size(&m)
 		data := make([]byte, size)
-		n := Marshal(data, &m)
+		n, err := Marshal(data, &m)
+		if err != nil {
+			t.Fatalf("marshal: %v", err)
+		}
 		if size != n {
 			t.Fatalf("expected struct size %d, got %d", size, n)
 		}
@@ -253,7 +270,10 @@ func TestPointerStructMarshal(t *testing.T) {
 
 		size := Size(&b)
 		data := make([]byte, size)
-		n := Marshal(data, &b)
+		n, err := Marshal(data, &b)
+		if err != nil {
+			t.Fatalf("marshal: %v", err)
+		}
 		if size != n {
 			t.Fatalf("expected struct size %d, got %d", size, n)
 		}
@@ -284,7 +304,10 @@ func TestTagsMarshal(t *testing.T) {
 
 		size := Size(&m)
 		data := make([]byte, size)
-		n := Marshal(data, &m)
+		n, err := Marshal(data, &m)
+		if err != nil {
+			t.Fatalf("marshal: %v", err)
+		}
 		if size != n {
 			t.Fatalf("expected tag size %d, got %d", size, n)
 		}
@@ -327,7 +350,10 @@ func TestPointerTagsMarshal(t *testing.T) {
 		}
 		size := Size(&v)
 		data := make([]byte, size)
-		n := Marshal(data, &v)
+		n, err := Marshal(data, &v)
+		if err != nil {
+			t.Fatalf("marshal: %v", err)
+		}
 		if size != n {
 			t.Fatalf("expected tag size %d, got %d", size, n)
 		}
@@ -358,7 +384,10 @@ func TestTagsSliceMarshal(t *testing.T) {
 
 	size := Size(&protoTagsSliceMarshal)
 	data := make([]byte, size)
-	n := Marshal(data, &protoTagsSliceMarshal)
+	n, err := Marshal(data, &protoTagsSliceMarshal)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
 	if size != n {
 		t.Fatalf("expected tags slice size %d, got %d", size, n)
 	}
