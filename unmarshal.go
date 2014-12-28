@@ -34,6 +34,7 @@ func Unmarshal(data []byte, v interface{}) (err error) {
 func unmarshal(data []byte, val reflect.Value) (err error) {
 	num := val.NumField()
 	var field reflect.Value
+	//	var ftype int
 
 	for len(data) > 0 {
 		key, n := binary.Uvarint(data)
@@ -48,6 +49,17 @@ func unmarshal(data []byte, val reflect.Value) (err error) {
 		} else {
 			break
 		}
+
+		/*
+			ftype, _ = parseTag(val.Type().Field(fnum - 1).Tag.Get("protobuf"))
+			if ftype > ftypeStart && ftype < ftypeEnd {
+				data, err = unmarshalTag(ftype, data, key, field)
+				if err != nil {
+					return err
+				}
+				continue
+			}
+		*/
 
 		switch key & 7 {
 		case wireVarint:
@@ -86,6 +98,28 @@ func unmarshal(data []byte, val reflect.Value) (err error) {
 	return err
 }
 
+/*
+func unmarshalTag(ftype int, data []byte, key uint64, val reflect.Value) ([]byte, error) {
+	var err error
+
+	switch key & 7 {
+	case wireFixed32:
+		if len(data) < 4 {
+			return data, errors.New("bad 32-bit value")
+		}
+		err = unmarshalFixed32(val, binary.LittleEndian.Uint32(data))
+		data = data[4:]
+	case wireFixed64:
+		if len(data) < 8 {
+			return data, errors.New("bad 64-bit value")
+		}
+		err = unmarshalFixed64(val, binary.LittleEndian.Uint64(data))
+		data = data[8:]
+	}
+	return data, err
+}
+*/
+
 func unmarshalBytes(val reflect.Value, b []byte) error {
 	switch val.Kind() {
 	case reflect.String:
@@ -118,15 +152,14 @@ func unmarshalBytes(val reflect.Value, b []byte) error {
 	return nil
 }
 
-// TODO: handle tags
 func unmarshalFixed32(val reflect.Value, v uint32) error {
 	switch val.Kind() {
+	case reflect.Int32:
+		return setInt(val, int64(int32(v)))
+	case reflect.Uint32:
+		return setUint(val, uint64(v))
 	case reflect.Float32:
-		x := float64(math.Float32frombits(v))
-		if val.OverflowFloat(float64(x)) {
-			return errors.New("float32 overflow")
-		}
-		val.SetFloat(float64(x))
+		return setFloat(val, float64(math.Float32frombits(v)))
 	case reflect.Ptr:
 		if val.IsNil() {
 			val.Set(reflect.New(val.Type().Elem()))
@@ -138,29 +171,23 @@ func unmarshalFixed32(val reflect.Value, v uint32) error {
 	return nil
 }
 
-// TODO: handle tags
 func unmarshalFixed32Slice(val reflect.Value, v uint32) error {
-	vtype := val.Type().Elem()
-	elem := reflect.New(vtype).Elem()
-	switch vtype.Kind() {
-	case reflect.Float32:
-		if err := unmarshalFixed32(elem, v); err != nil {
-			return err
-		}
+	elem := reflect.New(val.Type().Elem()).Elem()
+	if err := unmarshalFixed32(elem, v); err != nil {
+		return err
 	}
 	val.Set(reflect.Append(val, elem))
 	return nil
 }
 
-// TODO: handle tags
 func unmarshalFixed64(val reflect.Value, v uint64) error {
 	switch val.Kind() {
+	case reflect.Int64:
+		return setInt(val, int64(v))
+	case reflect.Uint64:
+		return setUint(val, v)
 	case reflect.Float64:
-		x := math.Float64frombits(v)
-		if val.OverflowFloat(x) {
-			return errors.New("float64 overflow")
-		}
-		val.SetFloat(x)
+		return setFloat(val, math.Float64frombits(v))
 	case reflect.Ptr:
 		if val.IsNil() {
 			val.Set(reflect.New(val.Type().Elem()))
@@ -172,15 +199,10 @@ func unmarshalFixed64(val reflect.Value, v uint64) error {
 	return nil
 }
 
-// TODO: handle tags
 func unmarshalFixed64Slice(val reflect.Value, v uint64) error {
-	vtype := val.Type().Elem()
-	elem := reflect.New(vtype).Elem()
-	switch vtype.Kind() {
-	case reflect.Float64:
-		if err := unmarshalFixed64(elem, v); err != nil {
-			return err
-		}
+	elem := reflect.New(val.Type().Elem()).Elem()
+	if err := unmarshalFixed64(elem, v); err != nil {
+		return err
 	}
 	val.Set(reflect.Append(val, elem))
 	return nil
@@ -236,7 +258,7 @@ func setUint(val reflect.Value, v uint64) error {
 
 func setInt(val reflect.Value, v int64) error {
 	if val.OverflowInt(v) {
-		return errors.New("uint overflow")
+		return errors.New("int overflow")
 	}
 	val.SetInt(v)
 	return nil
@@ -251,5 +273,13 @@ func setBool(val reflect.Value, v uint64) error {
 	} else {
 		val.SetBool(true)
 	}
+	return nil
+}
+
+func setFloat(val reflect.Value, v float64) error {
+	if val.OverflowFloat(v) {
+		return errors.New("float64 overflow")
+	}
+	val.SetFloat(v)
 	return nil
 }

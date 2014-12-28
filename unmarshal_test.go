@@ -266,3 +266,110 @@ func TestPointerStructUnmarshal(t *testing.T) {
 		}
 	}
 }
+
+func TestTagsUnmarshal(t *testing.T) {
+	t.Parallel()
+
+	for _, m := range protoTags {
+		pb := &testproto.ProtoTags{
+			Sfixed32: proto.Int32(m.Sfixed32),
+			Sfixed64: proto.Int64(m.Sfixed64),
+			Fixed32:  proto.Uint32(m.Fixed32),
+			Fixed64:  proto.Uint64(m.Fixed64),
+		}
+		pbData, err := proto.Marshal(pb)
+		if err != nil {
+			t.Fatalf("protobuf marshal: %v", err)
+		}
+
+		var v = struct {
+			Sfixed32 int32  `protobuf:"sfixed32,required"`
+			Sfixed64 int64  `protobuf:"sfixed64,required"`
+			Fixed32  uint32 `protobuf:"fixed32,required"`
+			Fixed64  uint64 `protobuf:"fixed64,required"`
+		}{}
+		if err = Unmarshal(pbData, &v); err != nil {
+			t.Fatalf("unmarshal tag: %v", err)
+		}
+		if !reflect.DeepEqual(m, v) {
+			t.Fatalf("execpted tag %#v, got %#v", m, v)
+		}
+	}
+}
+
+func TestPointerTagsUnmarshal(t *testing.T) {
+	t.Parallel()
+
+	for _, m := range protoTags {
+		pb := &testproto.ProtoTags{
+			Sfixed32: proto.Int32(m.Sfixed32),
+			Sfixed64: proto.Int64(m.Sfixed64),
+			Fixed32:  proto.Uint32(m.Fixed32),
+			Fixed64:  proto.Uint64(m.Fixed64),
+		}
+		pbData, err := proto.Marshal(pb)
+		if err != nil {
+			t.Fatalf("protobuf marshal: %v", err)
+		}
+
+		var v = struct {
+			Sfixed32 *int32  `protobuf:"sfixed32,required"`
+			Sfixed64 *int64  `protobuf:"sfixed64,required"`
+			Fixed32  *uint32 `protobuf:"fixed32,required"`
+			Fixed64  *uint64 `protobuf:"fixed64,required"`
+		}{}
+		if err = Unmarshal(pbData, &v); err != nil {
+			t.Fatalf("unmarshal tag: %v", err)
+		}
+		if m.Sfixed32 != *v.Sfixed32 {
+			t.Fatalf("expected pointer tag %#v, got %#v", m.Sfixed32, v.Sfixed32)
+		}
+		if m.Sfixed64 != *v.Sfixed64 {
+			t.Fatalf("expected pointer tag %#v, got %#v", m.Sfixed64, v.Sfixed64)
+		}
+		if m.Fixed32 != *v.Fixed32 {
+			t.Fatalf("expected pointer tag %#v, got %#v", m.Fixed32, v.Fixed32)
+		}
+		if m.Fixed64 != *v.Fixed64 {
+			t.Fatalf("expected pointer tag %#v, got %#v", m.Fixed64, v.Fixed64)
+		}
+	}
+}
+
+func TestTagsSliceUnmarshal(t *testing.T) {
+	t.Parallel()
+
+	pb := &testproto.ProtoTagsSlice{
+		Sfixed32Slice: protoTagsSliceMarshal.Sfixed32Slice,
+		Sfixed64Slice: protoTagsSliceMarshal.Sfixed64Slice,
+		Fixed32Slice:  protoTagsSliceMarshal.Fixed32Slice,
+		Fixed64Slice:  protoTagsSliceMarshal.Fixed64Slice,
+	}
+	pbData, err := proto.Marshal(pb)
+	if err != nil {
+		t.Fatalf("protobuf marshal: %v", err)
+	}
+
+	var v = struct {
+		Sfixed32Slice []int32  `protobuf:"sfixed32,repeated"`
+		Sfixed64Slice []int64  `protobuf:"sfixed64,repeated"`
+		Fixed32Slice  []uint32 `protobuf:"fixed32,repeated"`
+		Fixed64Slice  []uint64 `protobuf:"fixed64,repeated"`
+	}{}
+	if err = Unmarshal(pbData, &v); err != nil {
+		t.Fatalf("unmarshal bytes: %v", err)
+	}
+
+	if !reflect.DeepEqual(pb.Sfixed32Slice, v.Sfixed32Slice) {
+		t.Fatalf("execpted slice tag %#v, got %#v", pb.Sfixed32Slice, v.Sfixed32Slice)
+	}
+	if !reflect.DeepEqual(pb.Sfixed64Slice, v.Sfixed64Slice) {
+		t.Fatalf("execpted slice tag %#v, got %#v", pb.Sfixed64Slice, v.Sfixed64Slice)
+	}
+	if !reflect.DeepEqual(pb.Fixed32Slice, v.Fixed32Slice) {
+		t.Fatalf("execpted slice tag %#v, got %#v", pb.Fixed32Slice, v.Fixed32Slice)
+	}
+	if !reflect.DeepEqual(pb.Fixed64Slice, v.Fixed64Slice) {
+		t.Fatalf("execpted slice tag %#v, got %#v", pb.Fixed64Slice, v.Fixed64Slice)
+	}
+}
