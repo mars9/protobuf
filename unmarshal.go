@@ -34,7 +34,6 @@ func Unmarshal(data []byte, v interface{}) (err error) {
 func unmarshal(data []byte, val reflect.Value) (err error) {
 	num := val.NumField()
 	var field reflect.Value
-	//	var ftype int
 
 	for len(data) > 0 {
 		key, n := binary.Uvarint(data)
@@ -50,17 +49,6 @@ func unmarshal(data []byte, val reflect.Value) (err error) {
 			break
 		}
 
-		/*
-			ftype, _ = parseTag(val.Type().Field(fnum - 1).Tag.Get("protobuf"))
-			if ftype > ftypeStart && ftype < ftypeEnd {
-				data, err = unmarshalTag(ftype, data, key, field)
-				if err != nil {
-					return err
-				}
-				continue
-			}
-		*/
-
 		switch key & 7 {
 		case wireVarint:
 			v, n := binary.Uvarint(data)
@@ -72,12 +60,18 @@ func unmarshal(data []byte, val reflect.Value) (err error) {
 			}
 			data = data[n:]
 		case wireFixed32:
+			if len(data) < 4 {
+				return errors.New("bad 32-bit value")
+			}
 			v := binary.LittleEndian.Uint32(data)
 			if err = unmarshalFixed32(field, v); err != nil {
 				return err
 			}
 			data = data[4:]
 		case wireFixed64:
+			if len(data) < 8 {
+				return errors.New("bad 64-bit value")
+			}
 			v := binary.LittleEndian.Uint64(data)
 			if err = unmarshalFixed64(field, v); err != nil {
 				return err
@@ -97,28 +91,6 @@ func unmarshal(data []byte, val reflect.Value) (err error) {
 	}
 	return err
 }
-
-/*
-func unmarshalTag(ftype int, data []byte, key uint64, val reflect.Value) ([]byte, error) {
-	var err error
-
-	switch key & 7 {
-	case wireFixed32:
-		if len(data) < 4 {
-			return data, errors.New("bad 32-bit value")
-		}
-		err = unmarshalFixed32(val, binary.LittleEndian.Uint32(data))
-		data = data[4:]
-	case wireFixed64:
-		if len(data) < 8 {
-			return data, errors.New("bad 64-bit value")
-		}
-		err = unmarshalFixed64(val, binary.LittleEndian.Uint64(data))
-		data = data[8:]
-	}
-	return data, err
-}
-*/
 
 func unmarshalBytes(val reflect.Value, b []byte) error {
 	switch val.Kind() {
@@ -166,17 +138,12 @@ func unmarshalFixed32(val reflect.Value, v uint32) error {
 		}
 		return unmarshalFixed32(val.Elem(), v)
 	case reflect.Slice:
-		return unmarshalFixed32Slice(val, v)
+		elem := reflect.New(val.Type().Elem()).Elem()
+		if err := unmarshalFixed32(elem, v); err != nil {
+			return err
+		}
+		val.Set(reflect.Append(val, elem))
 	}
-	return nil
-}
-
-func unmarshalFixed32Slice(val reflect.Value, v uint32) error {
-	elem := reflect.New(val.Type().Elem()).Elem()
-	if err := unmarshalFixed32(elem, v); err != nil {
-		return err
-	}
-	val.Set(reflect.Append(val, elem))
 	return nil
 }
 
@@ -194,17 +161,12 @@ func unmarshalFixed64(val reflect.Value, v uint64) error {
 		}
 		return unmarshalFixed64(val.Elem(), v)
 	case reflect.Slice:
-		return unmarshalFixed64Slice(val, v)
+		elem := reflect.New(val.Type().Elem()).Elem()
+		if err := unmarshalFixed64(elem, v); err != nil {
+			return err
+		}
+		val.Set(reflect.Append(val, elem))
 	}
-	return nil
-}
-
-func unmarshalFixed64Slice(val reflect.Value, v uint64) error {
-	elem := reflect.New(val.Type().Elem()).Elem()
-	if err := unmarshalFixed64(elem, v); err != nil {
-		return err
-	}
-	val.Set(reflect.Append(val, elem))
 	return nil
 }
 
