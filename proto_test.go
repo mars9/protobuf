@@ -13,7 +13,7 @@ type testStruct struct {
 	Float32 float32
 	Float64 float64
 	Bool    bool
-	//String  string  // TODO: fixme!
+	String  string
 
 	Uint32Slice  []uint32
 	Uint64Slice  []uint64
@@ -21,7 +21,6 @@ type testStruct struct {
 	Int64Slice   []int64
 	Float32Slice []float32
 	Float64Slice []float64
-	BoolSlice    []bool
 	StringSlice  []string
 }
 
@@ -54,7 +53,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 		Float32: 42.0,
 		Float64: 42.0,
 		Bool:    true,
-		//String:  "string", // TODO: fixme!
+		String:  "string",
 
 		Uint32Slice:  []uint32{40, 41, 42, 43, 44},
 		Uint64Slice:  []uint64{40, 41, 42, 43, 44},
@@ -62,7 +61,6 @@ func TestMarshalUnmarshal(t *testing.T) {
 		Int64Slice:   []int64{-40, -41, -42, -43, -44},
 		Float32Slice: []float32{40.0, 41.0, 42.0, 43.0, 44.0},
 		Float64Slice: []float64{40.0, 41.0, 42.0, 43.0, 44.0},
-		BoolSlice:    []bool{true, false, true},
 		StringSlice:  []string{"string1", "string2", "string3"},
 	}
 
