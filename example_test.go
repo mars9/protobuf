@@ -6,7 +6,7 @@ import (
 	"log"
 )
 
-func Example_MarshalUnmarshal() {
+func ExampleMarshal() {
 	type Embedded struct {
 		Field1 string
 		Field2 uint64
@@ -31,19 +31,37 @@ func Example_MarshalUnmarshal() {
 
 	fmt.Println(hex.EncodeToString(data))
 
-	var x = &MyStruct{}
-	if err := Unmarshal(data, x); err != nil {
+	// Output:
+	// 082a120a0a066669656c6431102b
+}
+
+func ExampleUnmarshal() {
+	type Embedded struct {
+		Field1 string
+		Field2 uint64
+	}
+	type MyStruct struct {
+		Field1 uint32
+		Field2 *Embedded
+	}
+
+	data, err := hex.DecodeString("082a120a0a066669656c6431102b")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var v = &MyStruct{}
+	if err := Unmarshal(data, v); err != nil {
 		log.Fatalf("unmarshal %v", err)
 	}
 
-	fmt.Printf("%d %s %d\n", x.Field1, x.Field2.Field1, x.Field2.Field2)
+	fmt.Printf("%d %s %d\n", v.Field1, v.Field2.Field1, v.Field2.Field2)
 
 	// Output:
-	// 082a120a0a066669656c6431102b
 	// 42 field1 43
 }
 
-func Example_TagMarshalUnmarshal() {
+func ExampleMarshal_tag() {
 	type Embedded struct {
 		Field1 string `protobuf:"bytes,required"`
 		Field2 uint64 `protobuf:"varint,optional"`
@@ -70,14 +88,6 @@ func Example_TagMarshalUnmarshal() {
 
 	fmt.Println(hex.EncodeToString(data))
 
-	var x = &MyStruct{}
-	if err := Unmarshal(data, x); err != nil {
-		log.Fatalf("unmarshal %v", err)
-	}
-
-	fmt.Printf("%d %d %s %d\n", x.Field1, x.Field2, x.Field3.Field1, x.Field3.Field2)
-
 	// Output:
 	// 082a152b0000001a0a0a066669656c6431102c
-	// 42 43 field1 44
 }
