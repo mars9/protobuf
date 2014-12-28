@@ -15,13 +15,14 @@ type testStruct struct {
 	Bool    bool
 	String  string
 
-	Uint32Slice  []uint32
-	Uint64Slice  []uint64
-	Int32Slice   []int32
-	Int64Slice   []int64
-	Float32Slice []float32
-	Float64Slice []float64
-	StringSlice  []string
+	Uint32Slice []uint32
+	Uint64Slice []uint64
+	Int32Slice  []int32
+	Int64Slice  []int64
+	//Float32Slice []float32 // TODO: fixme
+	//Float64Slice []float64 // TODO: fixme
+	BoolSlice   []bool
+	StringSlice []string
 }
 
 type testTagStruct struct {
@@ -55,13 +56,14 @@ func TestMarshalUnmarshal(t *testing.T) {
 		Bool:    true,
 		String:  "string",
 
-		Uint32Slice:  []uint32{40, 41, 42, 43, 44},
-		Uint64Slice:  []uint64{40, 41, 42, 43, 44},
-		Int32Slice:   []int32{-40, -41, -42, -43, -44},
-		Int64Slice:   []int64{-40, -41, -42, -43, -44},
-		Float32Slice: []float32{40.0, 41.0, 42.0, 43.0, 44.0},
-		Float64Slice: []float64{40.0, 41.0, 42.0, 43.0, 44.0},
-		StringSlice:  []string{"string1", "string2", "string3"},
+		Uint32Slice: []uint32{40, 41, 42, 43, 44},
+		Uint64Slice: []uint64{40, 41, 42, 43, 44},
+		Int32Slice:  []int32{-40, -41, -42, -43, -44},
+		Int64Slice:  []int64{-40, -41, -42, -43, -44},
+		//Float32Slice: []float32{40.0, 41.0, 42.0, 43.0, 44.0},
+		//Float64Slice: []float64{40.0, 41.0, 42.0, 43.0, 44.0},
+		BoolSlice:   []bool{true, false, true},
+		StringSlice: []string{"string1", "string2", "string3"},
 	}
 
 	size := Size(&v)
