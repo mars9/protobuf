@@ -6,7 +6,7 @@ import "reflect"
 // protocol buffer size. The struct underlying v must be a pointer.
 func Size(v interface{}) (n int) {
 	val := reflect.ValueOf(v)
-	if val.Kind() != reflect.Ptr && val.Elem().Kind() != reflect.Struct {
+	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Struct {
 		panic("v must be a pointer to a struct")
 	}
 	return sizeStruct(val.Elem())

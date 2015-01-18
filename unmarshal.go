@@ -25,7 +25,7 @@ func Unmarshal(data []byte, v interface{}) (err error) {
 	}()
 
 	val := reflect.ValueOf(v)
-	if val.Kind() != reflect.Ptr {
+	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Struct {
 		return errors.New("v must be a pointer to a struct")
 	}
 	return unmarshal(data, val.Elem())

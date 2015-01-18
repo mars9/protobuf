@@ -25,7 +25,7 @@ const (
 // will panic.
 func Marshal(data []byte, v interface{}) (n int, err error) {
 	val := reflect.ValueOf(v)
-	if val.Kind() != reflect.Ptr && val.Elem().Kind() != reflect.Struct {
+	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Struct {
 		panic("v must be a pointer to a struct")
 	}
 	return marshalStruct(data, val.Elem())
