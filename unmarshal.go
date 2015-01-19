@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math"
 	"reflect"
+	"time"
 )
 
 // Unmarshal parses the protocol buffer representation in data and places
@@ -171,6 +172,13 @@ func unmarshalFixed64(val reflect.Value, v uint64) error {
 }
 
 func unmarshalUvarint(val reflect.Value, v uint64) error {
+	if _, ok := val.Interface().(time.Time); ok {
+		ns := int64(v)
+		t := time.Unix(ns/int64(time.Second), ns%int64(time.Second))
+		val.Set(reflect.ValueOf(t))
+		return nil
+	}
+
 	switch val.Kind() {
 	case reflect.Int32, reflect.Int64:
 		return setInt(val, int64(v))

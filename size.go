@@ -1,6 +1,9 @@
 package protobuf
 
-import "reflect"
+import (
+	"reflect"
+	"time"
+)
 
 // Size traverses the value v recursively and returns the encoded
 // protocol buffer size. The struct underlying v must be a pointer.
@@ -25,6 +28,11 @@ func sizeStruct(val reflect.Value) (n int) {
 		ftype, _ = parseTag(val.Type().Field(i).Tag.Get("protobuf"))
 		if ftype > ftypeStart && ftype < ftypeEnd {
 			n += sizeTag(ftype, field)
+			continue
+		}
+
+		if v, ok := field.Interface().(time.Time); ok {
+			n += 1 + uvarintSize(uint64(v.UnixNano()))
 			continue
 		}
 

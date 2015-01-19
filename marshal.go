@@ -7,6 +7,7 @@ import (
 	"errors"
 	"math"
 	"reflect"
+	"time"
 )
 
 const (
@@ -48,6 +49,11 @@ func marshalStruct(data []byte, val reflect.Value) (n int, err error) {
 				return n + m, err
 			}
 			n += m
+			continue
+		}
+
+		if v, ok := field.Interface().(time.Time); ok {
+			n += putUint(data[n:], i+1, uint64(v.UnixNano()))
 			continue
 		}
 
