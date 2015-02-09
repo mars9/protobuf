@@ -105,7 +105,8 @@ func unmarshalBytes(val reflect.Value, b []byte) error {
 			elem.SetString(string(b))
 			val.Set(reflect.Append(val, elem))
 		case reflect.Uint8: // []byte
-			val.SetBytes(b)
+			// copy bytes
+			val.SetBytes(append([]byte(nil), b...))
 		case reflect.Slice: // [][]byte
 			vtype := val.Type().Elem()
 			elem := reflect.New(vtype).Elem()
