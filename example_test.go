@@ -26,7 +26,7 @@ func ExampleMarshal() {
 
 	data := make([]byte, Size(v))
 	if _, err := Marshal(data, v); err != nil {
-		log.Fatal("marshal: %v", err)
+		log.Fatalf("marshal: %v", err)
 	}
 
 	fmt.Println(hex.EncodeToString(data))
@@ -83,7 +83,7 @@ func ExampleMarshal_tag() {
 
 	data := make([]byte, Size(v))
 	if _, err := Marshal(data, v); err != nil {
-		log.Fatal("marshal: %v", err)
+		log.Fatalf("marshal: %v", err)
 	}
 
 	fmt.Println(hex.EncodeToString(data))
