@@ -15,6 +15,7 @@ It has these top-level messages:
 	ProtoStruct
 	ProtoTags
 	ProtoTagsSlice
+	ProtoStructSlice
 */
 package testproto
 
@@ -319,6 +320,46 @@ func (m *ProtoTagsSlice) GetFixed64Slice() []uint64 {
 		return m.Fixed64Slice
 	}
 	return nil
+}
+
+type ProtoStructSlice struct {
+	StructSlice      []*ProtoStructSlice_Struct `protobuf:"bytes,1,rep" json:"StructSlice,omitempty"`
+	XXX_unrecognized []byte                     `json:"-"`
+}
+
+func (m *ProtoStructSlice) Reset()         { *m = ProtoStructSlice{} }
+func (m *ProtoStructSlice) String() string { return proto.CompactTextString(m) }
+func (*ProtoStructSlice) ProtoMessage()    {}
+
+func (m *ProtoStructSlice) GetStructSlice() []*ProtoStructSlice_Struct {
+	if m != nil {
+		return m.StructSlice
+	}
+	return nil
+}
+
+type ProtoStructSlice_Struct struct {
+	Uint32           *uint32 `protobuf:"varint,1,req" json:"Uint32,omitempty"`
+	Uint64           *uint64 `protobuf:"varint,2,req" json:"Uint64,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *ProtoStructSlice_Struct) Reset()         { *m = ProtoStructSlice_Struct{} }
+func (m *ProtoStructSlice_Struct) String() string { return proto.CompactTextString(m) }
+func (*ProtoStructSlice_Struct) ProtoMessage()    {}
+
+func (m *ProtoStructSlice_Struct) GetUint32() uint32 {
+	if m != nil && m.Uint32 != nil {
+		return *m.Uint32
+	}
+	return 0
+}
+
+func (m *ProtoStructSlice_Struct) GetUint64() uint64 {
+	if m != nil && m.Uint64 != nil {
+		return *m.Uint64
+	}
+	return 0
 }
 
 func init() {

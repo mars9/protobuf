@@ -49,3 +49,11 @@ message ProtoTagsSlice {
 	repeated fixed32 Fixed32Slice   = 3;
 	repeated fixed64 Fixed64Slice   = 4;
 }
+
+message ProtoStructSlice {
+	message Struct {
+		required uint32 Uint32 = 1;
+		required uint64 Uint64 = 2;
+	}
+	repeated Struct StructSlice = 1;
+}
