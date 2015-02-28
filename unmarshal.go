@@ -115,6 +115,13 @@ func unmarshalBytes(val reflect.Value, b []byte) error {
 				return err
 			}
 			val.Set(reflect.Append(val, elem))
+		case reflect.Struct, reflect.Ptr:
+			vtype := val.Type().Elem()
+			elem := reflect.New(vtype).Elem()
+			if err := unmarshalBytes(elem, b); err != nil {
+				return err
+			}
+			val.Set(reflect.Append(val, elem))
 		}
 	case reflect.Struct:
 		return unmarshal(b, val)

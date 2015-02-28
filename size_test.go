@@ -82,6 +82,26 @@ var protoTagsSliceSize = struct {
 	Fixed64Slice  []uint64 `protobuf:"fixed64,repeated"`
 }{}
 
+var protoStructSlice = struct {
+	StructSlice []pstruct
+}{
+	StructSlice: []pstruct{
+		pstruct{Uint32: 1<<32 - 1, Uint64: 1<<64 - 1},
+		pstruct{Uint32: 0, Uint64: 0},
+		pstruct{Uint32: 42, Uint64: 42},
+	},
+}
+
+var protoStructPtrSlice = struct {
+	StructSlice []*pstruct
+}{
+	StructSlice: []*pstruct{
+		&pstruct{Uint32: 1<<32 - 1, Uint64: 1<<64 - 1},
+		&pstruct{Uint32: 0, Uint64: 0},
+		&pstruct{Uint32: 42, Uint64: 42},
+	},
+}
+
 func init() {
 	for _, m := range protoTypes {
 		protoSliceSize.Uint32Slice = append(protoSliceSize.Uint32Slice, m.Uint32)
@@ -315,5 +335,39 @@ func TestTagsSliceSize(t *testing.T) {
 	size := Size(&protoTagsSliceSize)
 	if pbSize != size {
 		t.Fatalf("expected tag slice size %d, got %d", pbSize, size)
+	}
+}
+
+func TestStructSliceSize(t *testing.T) {
+	t.Parallel()
+
+	pb := &testproto.ProtoStructSlice{
+		StructSlice: []*testproto.ProtoStructSlice_Struct{
+			&testproto.ProtoStructSlice_Struct{Uint32: proto.Uint32(1<<32 - 1), Uint64: proto.Uint64(1<<64 - 1)},
+			&testproto.ProtoStructSlice_Struct{Uint32: proto.Uint32(0), Uint64: proto.Uint64(0)},
+			&testproto.ProtoStructSlice_Struct{Uint32: proto.Uint32(42), Uint64: proto.Uint64(42)},
+		},
+	}
+	pbSize := proto.Size(pb)
+	size := Size(&protoStructSlice)
+	if pbSize != size {
+		t.Fatalf("expected struct slice size %d, got %d", pbSize, size)
+	}
+}
+
+func TestStructPtrSliceSize(t *testing.T) {
+	t.Parallel()
+
+	pb := &testproto.ProtoStructSlice{
+		StructSlice: []*testproto.ProtoStructSlice_Struct{
+			&testproto.ProtoStructSlice_Struct{Uint32: proto.Uint32(1<<32 - 1), Uint64: proto.Uint64(1<<64 - 1)},
+			&testproto.ProtoStructSlice_Struct{Uint32: proto.Uint32(0), Uint64: proto.Uint64(0)},
+			&testproto.ProtoStructSlice_Struct{Uint32: proto.Uint32(42), Uint64: proto.Uint64(42)},
+		},
+	}
+	pbSize := proto.Size(pb)
+	size := Size(&protoStructPtrSlice)
+	if pbSize != size {
+		t.Fatalf("expected struct slice size %d, got %d", pbSize, size)
 	}
 }

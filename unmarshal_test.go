@@ -375,3 +375,67 @@ func TestTagsSliceUnmarshal(t *testing.T) {
 		t.Fatalf("execpted slice tag %#v, got %#v", pb.Fixed64Slice, v.Fixed64Slice)
 	}
 }
+
+func TestStructSliceUnmarshal(t *testing.T) {
+	t.Parallel()
+
+	pb := &testproto.ProtoStructSlice{
+		StructSlice: []*testproto.ProtoStructSlice_Struct{
+			&testproto.ProtoStructSlice_Struct{Uint32: proto.Uint32(1<<32 - 1), Uint64: proto.Uint64(1<<64 - 1)},
+			&testproto.ProtoStructSlice_Struct{Uint32: proto.Uint32(0), Uint64: proto.Uint64(0)},
+			&testproto.ProtoStructSlice_Struct{Uint32: proto.Uint32(42), Uint64: proto.Uint64(42)},
+		},
+	}
+	pbData, err := proto.Marshal(pb)
+	if err != nil {
+		t.Fatalf("protobuf marshal: %v", err)
+	}
+
+	var v = struct {
+		StructSlice []pstruct
+	}{}
+	if err = Unmarshal(pbData, &v); err != nil {
+		t.Fatalf("unmarshal bytes: %v", err)
+	}
+
+	for i, val := range v.StructSlice {
+		if *pb.StructSlice[i].Uint32 != val.Uint32 {
+			t.Fatalf("expected struct slice uint32 value %d, got %d", pb.StructSlice[i].Uint32, val.Uint32)
+		}
+		if *pb.StructSlice[i].Uint64 != val.Uint64 {
+			t.Fatalf("expected struct slice uint64 value %d, got %d", pb.StructSlice[i].Uint64, val.Uint64)
+		}
+	}
+}
+
+func TestStructPtrSliceUnmarshal(t *testing.T) {
+	t.Parallel()
+
+	pb := &testproto.ProtoStructSlice{
+		StructSlice: []*testproto.ProtoStructSlice_Struct{
+			&testproto.ProtoStructSlice_Struct{Uint32: proto.Uint32(1<<32 - 1), Uint64: proto.Uint64(1<<64 - 1)},
+			&testproto.ProtoStructSlice_Struct{Uint32: proto.Uint32(0), Uint64: proto.Uint64(0)},
+			&testproto.ProtoStructSlice_Struct{Uint32: proto.Uint32(42), Uint64: proto.Uint64(42)},
+		},
+	}
+	pbData, err := proto.Marshal(pb)
+	if err != nil {
+		t.Fatalf("protobuf marshal: %v", err)
+	}
+
+	var v = struct {
+		StructSlice []*pstruct
+	}{}
+	if err = Unmarshal(pbData, &v); err != nil {
+		t.Fatalf("unmarshal bytes: %v", err)
+	}
+
+	for i, val := range v.StructSlice {
+		if *pb.StructSlice[i].Uint32 != val.Uint32 {
+			t.Fatalf("expected struct slice uint32 value %d, got %d", pb.StructSlice[i].Uint32, val.Uint32)
+		}
+		if *pb.StructSlice[i].Uint64 != val.Uint64 {
+			t.Fatalf("expected struct slice uint64 value %d, got %d", pb.StructSlice[i].Uint64, val.Uint64)
+		}
+	}
+}

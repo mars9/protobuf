@@ -403,3 +403,69 @@ func TestTagsSliceMarshal(t *testing.T) {
 		t.Fatalf("expected tags slice bytes %#v, got %#v", pbData, data)
 	}
 }
+
+func TestStructSliceMarshal(t *testing.T) {
+	t.Parallel()
+
+	pb := &testproto.ProtoStructSlice{
+		StructSlice: []*testproto.ProtoStructSlice_Struct{
+			&testproto.ProtoStructSlice_Struct{Uint32: proto.Uint32(1<<32 - 1), Uint64: proto.Uint64(1<<64 - 1)},
+			&testproto.ProtoStructSlice_Struct{Uint32: proto.Uint32(0), Uint64: proto.Uint64(0)},
+			&testproto.ProtoStructSlice_Struct{Uint32: proto.Uint32(42), Uint64: proto.Uint64(42)},
+		},
+	}
+
+	size := Size(&protoStructSlice)
+	data := make([]byte, size)
+	n, err := Marshal(data, &protoStructSlice)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if size != n {
+		t.Fatalf("expected struct slice size %d, got %d", size, n)
+	}
+
+	pbData, err := proto.Marshal(pb)
+	if err != nil {
+		t.Fatalf("protobuf marshal: %v", err)
+	}
+	if n != len(pbData) {
+		t.Fatalf("expected struct slice size %d, got %d", size, n)
+	}
+	if bytes.Compare(data, pbData) != 0 {
+		t.Fatalf("expected struct slice bytes %#v, got %#v", pbData, data)
+	}
+}
+
+func TestStructPtrSliceMarshal(t *testing.T) {
+	t.Parallel()
+
+	pb := &testproto.ProtoStructSlice{
+		StructSlice: []*testproto.ProtoStructSlice_Struct{
+			&testproto.ProtoStructSlice_Struct{Uint32: proto.Uint32(1<<32 - 1), Uint64: proto.Uint64(1<<64 - 1)},
+			&testproto.ProtoStructSlice_Struct{Uint32: proto.Uint32(0), Uint64: proto.Uint64(0)},
+			&testproto.ProtoStructSlice_Struct{Uint32: proto.Uint32(42), Uint64: proto.Uint64(42)},
+		},
+	}
+
+	size := Size(&protoStructPtrSlice)
+	data := make([]byte, size)
+	n, err := Marshal(data, &protoStructPtrSlice)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if size != n {
+		t.Fatalf("expected struct slice size %d, got %d", size, n)
+	}
+
+	pbData, err := proto.Marshal(pb)
+	if err != nil {
+		t.Fatalf("protobuf marshal: %v", err)
+	}
+	if n != len(pbData) {
+		t.Fatalf("expected struct slice size %d, got %d", size, n)
+	}
+	if bytes.Compare(data, pbData) != 0 {
+		t.Fatalf("expected struct slice bytes %#v, got %#v", pbData, data)
+	}
+}

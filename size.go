@@ -135,6 +135,22 @@ func sizeSlice(val reflect.Value) (n int) {
 				n += sizeSlice(v)
 			}
 		}
+	case reflect.Struct:
+		for i := 0; i < vlen; i++ {
+			m := sizeStruct(val.Index(i))
+			n += 1 + m + uvarintSize(uint64(m))
+		}
+	case reflect.Ptr:
+		for i := 0; i < vlen; i++ {
+			v := val.Index(i).Elem()
+			switch v.Kind() {
+			case reflect.Struct:
+				m := sizeStruct(v)
+				n += 1 + m + uvarintSize(uint64(m))
+			default:
+				// TODO
+			}
+		}
 	}
 	return n
 }

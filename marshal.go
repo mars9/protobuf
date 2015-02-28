@@ -59,10 +59,7 @@ func marshalStruct(data []byte, val reflect.Value) (n int, err error) {
 
 		switch field.Kind() {
 		case reflect.Struct:
-			m := sizeStruct(field)
-			data[n], n = byte(i+1)<<3|wireBytes, n+1
-			n += binary.PutUvarint(data[n:], uint64(m))
-			m, err = marshalStruct(data[n:], field)
+			m, err := putStruct(data[n:], i+1, field)
 			if err != nil {
 				return n + m, err
 			}
@@ -75,10 +72,7 @@ func marshalStruct(data []byte, val reflect.Value) (n int, err error) {
 			v := field.Elem()
 			switch v.Kind() {
 			case reflect.Struct:
-				m := sizeStruct(field.Elem())
-				data[n], n = byte(i+1)<<3|wireBytes, n+1
-				n += binary.PutUvarint(data[n:], uint64(m))
-				m, err = marshalStruct(data[n:], field.Elem())
+				m, err := putStruct(data[n:], i+1, field.Elem())
 				if err != nil {
 					return n + m, err
 				}
@@ -91,7 +85,11 @@ func marshalStruct(data []byte, val reflect.Value) (n int, err error) {
 				n += marshalType(data[n:], i+1, v)
 			}
 		case reflect.Slice:
-			n += marshalSlice(data[n:], i+1, field)
+			m, err := marshalSlice(data[n:], i+1, field)
+			if err != nil {
+				return n + m, err
+			}
+			n += m
 		default:
 			n += marshalType(data[n:], i+1, field)
 		}
@@ -160,7 +158,7 @@ func marshalTag(ftype, fopt int, data []byte, key int, val reflect.Value) (n int
 	return n, err
 }
 
-func marshalSlice(data []byte, key int, val reflect.Value) (n int) {
+func marshalSlice(data []byte, key int, val reflect.Value) (n int, err error) {
 	vlen := val.Len()
 	switch val.Type().Elem().Kind() {
 	case reflect.Int32, reflect.Int64:
@@ -194,14 +192,40 @@ func marshalSlice(data []byte, key int, val reflect.Value) (n int) {
 	case reflect.Uint8:
 		n += putBytes(data[n:], key, val.Bytes())
 	case reflect.Slice:
+		var m int
 		for i := 0; i < vlen; i++ {
 			v := val.Index(i)
 			if v.Type().Elem().Kind() == reflect.Uint8 {
-				n += marshalSlice(data[n:], key, v)
+				if m, err = marshalSlice(data[n:], key, v); err != nil {
+					return n + m, err
+				}
+				n += m
+			}
+		}
+	case reflect.Struct:
+		var m int
+		for i := 0; i < vlen; i++ {
+			if m, err = putStruct(data[n:], key, val.Index(i)); err != nil {
+				return n + m, err
+			}
+			n += m
+		}
+	case reflect.Ptr:
+		var m int
+		for i := 0; i < vlen; i++ {
+			v := val.Index(i).Elem()
+			switch v.Kind() {
+			case reflect.Struct:
+				if m, err = putStruct(data[n:], key, v); err != nil {
+					return n + m, err
+				}
+				n += m
+			default:
+				// TODO
 			}
 		}
 	}
-	return n
+	return n, err
 }
 
 func marshalType(data []byte, key int, val reflect.Value) (n int) {
@@ -222,6 +246,18 @@ func marshalType(data []byte, key int, val reflect.Value) (n int) {
 		n += putString(data, key, val.String())
 	}
 	return n
+}
+
+func putStruct(data []byte, key int, val reflect.Value) (n int, err error) {
+	m := sizeStruct(val)
+	data[n], n = byte(key)<<3|wireBytes, n+1
+	n += binary.PutUvarint(data[n:], uint64(m))
+	m, err = marshalStruct(data[n:], val)
+	if err != nil {
+		return n + m, err
+	}
+	n += m
+	return n, err
 }
 
 func putUint(data []byte, key int, v uint64) (n int) {
