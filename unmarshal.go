@@ -123,6 +123,8 @@ func unmarshalBytes(val reflect.Value, b []byte) error {
 			}
 			val.Set(reflect.Append(val, elem))
 		}
+	case reflect.Interface:
+		return unmarshal(b, val.Elem())
 	case reflect.Struct:
 		return unmarshal(b, val)
 	case reflect.Ptr:

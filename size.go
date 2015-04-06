@@ -37,6 +37,8 @@ func sizeStruct(val reflect.Value) (n int) {
 		}
 
 		switch field.Kind() {
+		case reflect.Interface:
+			n += sizeSlice(field.Elem())
 		case reflect.Struct:
 			m := sizeStruct(field)
 			n += 1 + m + uvarintSize(uint64(m))

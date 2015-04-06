@@ -58,6 +58,12 @@ func marshalStruct(data []byte, val reflect.Value) (n int, err error) {
 		}
 
 		switch field.Kind() {
+		case reflect.Interface:
+			m, err := putStruct(data[n:], i+1, field.Elem())
+			if err != nil {
+				return n + m, err
+			}
+			n += m
 		case reflect.Struct:
 			m, err := putStruct(data[n:], i+1, field)
 			if err != nil {

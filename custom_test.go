@@ -26,6 +26,16 @@ type hiddenStruct struct {
 	myUint32Slice []uint32
 }
 
+type testInterface interface {
+	String() string
+}
+
+type interfaceImpl struct {
+	V string
+}
+
+func (v interfaceImpl) String() string { return v.V }
+
 func TestCustomTypes(t *testing.T) {
 	t.Parallel()
 
@@ -131,5 +141,29 @@ func TestHiddeStruct(t *testing.T) {
 
 	if !reflect.DeepEqual(empty, v) {
 		t.Fatalf("hidden types: expected %#v, got %#v", empty, v)
+	}
+}
+
+func TestInterface(t *testing.T) {
+	t.Parallel()
+
+	s := interfaceImpl{V: "test interface"}
+	size := Size(&s)
+	data := make([]byte, size)
+	n, err := Marshal(data, &s)
+	if err != nil {
+		t.Fatalf("interface marshal: %v", err)
+	}
+	if n != size {
+		t.Fatalf("interface marshal: expected size %d, got %d", size, n)
+	}
+
+	v := interfaceImpl{}
+	if err = Unmarshal(data, &v); err != nil {
+		t.Fatalf("interface unmarshal: %v", err)
+	}
+
+	if !reflect.DeepEqual(s, v) {
+		t.Fatalf("interface types: expected %#v, got %#v", s, v)
 	}
 }
