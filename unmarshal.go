@@ -14,7 +14,24 @@ import (
 //
 // Unmarshal uses the inverse of the encodings that Marshal uses,
 // allocating slices and pointers as necessary.
-func Unmarshal(data []byte, v interface{}) (err error) {
+func Unmarshal(data []byte, v interface{}) error {
+	return _unmarshal(data, v, false)
+}
+
+// UnmarshalUnsafe parses the protocol buffer representation in data and
+// places the decoded result in v. If the struct underlying v does not
+// match the data, the results can be unpredictable.
+//
+// UnmarshalUnsafe uses the inverse of the encodings that Marshal uses,
+// allocating slices and pointers as necessary.
+//
+// UnmarshalUnsafe does not copy raw byte slices. Most code should use
+// Unmarshal instead.
+func UnmarshalUnsafe(data []byte, v interface{}) error {
+	return _unmarshal(data, v, true)
+}
+
+func _unmarshal(data []byte, v interface{}, unsafe bool) (err error) {
 	defer func() {
 		if v := recover(); v != nil {
 			if msg, ok := v.(string); ok {
@@ -29,10 +46,10 @@ func Unmarshal(data []byte, v interface{}) (err error) {
 	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Struct {
 		return errors.New("v must be a pointer to a struct")
 	}
-	return unmarshal(data, val.Elem())
+	return unmarshal(data, val.Elem(), unsafe)
 }
 
-func unmarshal(data []byte, val reflect.Value) (err error) {
+func unmarshal(data []byte, val reflect.Value, unsafe bool) (err error) {
 	num := val.NumField()
 	var field reflect.Value
 
@@ -84,7 +101,7 @@ func unmarshal(data []byte, val reflect.Value) (err error) {
 				return errors.New("invalid varint value")
 			}
 			data = data[n:]
-			if err = unmarshalBytes(field, data[:v]); err != nil {
+			if err = unmarshalBytes(field, data[:v], unsafe); err != nil {
 				return err
 			}
 			data = data[v:]
@@ -93,7 +110,7 @@ func unmarshal(data []byte, val reflect.Value) (err error) {
 	return err
 }
 
-func unmarshalBytes(val reflect.Value, b []byte) error {
+func unmarshalBytes(val reflect.Value, b []byte, unsafe bool) error {
 	switch val.Kind() {
 	case reflect.String:
 		val.SetString(string(b))
@@ -105,31 +122,35 @@ func unmarshalBytes(val reflect.Value, b []byte) error {
 			elem.SetString(string(b))
 			val.Set(reflect.Append(val, elem))
 		case reflect.Uint8: // []byte
-			val.SetBytes(append([]byte(nil), b...))
+			if unsafe {
+				val.SetBytes(b)
+			} else {
+				val.SetBytes(append([]byte(nil), b...))
+			}
 		case reflect.Slice: // [][]byte
 			vtype := val.Type().Elem()
 			elem := reflect.New(vtype).Elem()
-			if err := unmarshalBytes(elem, b); err != nil {
+			if err := unmarshalBytes(elem, b, unsafe); err != nil {
 				return err
 			}
 			val.Set(reflect.Append(val, elem))
 		case reflect.Struct, reflect.Ptr:
 			vtype := val.Type().Elem()
 			elem := reflect.New(vtype).Elem()
-			if err := unmarshalBytes(elem, b); err != nil {
+			if err := unmarshalBytes(elem, b, unsafe); err != nil {
 				return err
 			}
 			val.Set(reflect.Append(val, elem))
 		}
 	case reflect.Interface:
-		return unmarshal(b, val.Elem())
+		return unmarshal(b, val.Elem(), unsafe)
 	case reflect.Struct:
-		return unmarshal(b, val)
+		return unmarshal(b, val, unsafe)
 	case reflect.Ptr:
 		if val.IsNil() {
 			val.Set(reflect.New(val.Type().Elem()))
 		}
-		return unmarshalBytes(val.Elem(), b)
+		return unmarshalBytes(val.Elem(), b, unsafe)
 	}
 	return nil
 }
