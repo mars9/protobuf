@@ -1,4 +1,9 @@
-# Protobuf [![GoDoc](https://godoc.org/github.com/mars9/protobuf?status.svg)](https://godoc.org/github.com/mars9/protobuf)
+Deprecated
+# DEPRECATED
+
+Use https://github.com/mars9/proto3
+
+## Protobuf [![GoDoc](https://godoc.org/github.com/mars9/protobuf?status.svg)](https://godoc.org/github.com/mars9/protobuf)
 
 Package protobuf converts data structures to and from the wire format
 of protocol buffers. See
