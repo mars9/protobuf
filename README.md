@@ -1,4 +1,3 @@
-Deprecated
 # DEPRECATED
 
 Use https://github.com/mars9/proto3
