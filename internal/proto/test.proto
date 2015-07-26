@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package proto;
+
+message TypesMessage {
+	uint32 Uint32  = 1;
+	uint64 Uint64  = 2;
+	int32 Int32    = 3;
+	int64 Int64    = 4;
+	float Float32  = 5;
+	double Float64 = 6;
+	bool Bool      = 7;
+	string String  = 8;
+	bytes Bytes    = 9;
+}
+
+message SliceMessage {
+	repeated uint32 Uint32  = 1;
+	repeated uint64 Uint64  = 2;
+	repeated int32 Int32    = 3;
+	repeated int64 Int64    = 4;
+	repeated float Float32  = 5;
+	repeated double Float64 = 6;
+	repeated bool Bool      = 7;
+	repeated string String  = 8;
+	repeated bytes Bytes    = 9;
+}
+
+message StructMessage {
+	TypesMessage types  = 1;
+	SliceMessage slices = 2;
+}
+
+/*
+message ProtoStruct {
+	message Struct {
+		required uint32 Uint32 = 1;
+		required uint64 Uint64 = 2;
+	}
+	required Struct Struct1 = 1;
+	required Struct Struct2 = 2;
+}
+
+message ProtoTags {
+	required sfixed32 Sfixed32 = 1;
+	required sfixed64 Sfixed64 = 2;
+	required fixed32 Fixed32   = 3;
+	required fixed64 Fixed64   = 4;
+}
+
+message ProtoTagsSlice {
+	repeated sfixed32 Sfixed32Slice = 1;
+	repeated sfixed64 Sfixed64Slice = 2;
+	repeated fixed32 Fixed32Slice   = 3;
+	repeated fixed64 Fixed64Slice   = 4;
+}
+
+message ProtoStructSlice {
+	message Struct {
+		required uint32 Uint32 = 1;
+		required uint64 Uint64 = 2;
+	}
+	repeated Struct StructSlice = 1;
+}
+*/
