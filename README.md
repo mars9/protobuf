@@ -13,17 +13,17 @@ definition types and Go field types:
 
 Go          | Protocol Buffer
 ----------- | -------------
-bool        | bool
-uint64      | uint64
-uint32      | uint64
-int64       | int64
-int32       | int32
-float       | float32
-double      | float64
-time.Time   | int64
-[]byte      | bytes
-string      | string
-struct      | message
+bool        | optional bool
+uint64      | optional uint64
+uint32      | optional uint64
+int64       | optional int64
+int32       | optional int32
+float       | optional float32
+double      | optional float64
+time.Time   | optional int64
+[]byte      | optional bytes
+string      | optional string
+struct      | optional message
 []bool      | repeated bool
 []uint64    | repeated uint64
 []uint32    | repeated uint64
