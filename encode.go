@@ -116,14 +116,12 @@ func (e *Encoder) encodeStruct(val reflect.Value, fields int) error {
 
 func (e *Encoder) encodeCustom(val reflect.Value, key int) (bool, error) {
 	itype := val.Interface()
-	/*
-		if t, ok := itype.(error); ok || val.Type() == errorType {
-			if val.IsNil() {
-				return true, nil
-			}
-			return true, e.writeString(key, t.Error())
+	if t, ok := itype.(error); ok || val.Type() == errorType {
+		if val.IsNil() {
+			return true, nil
 		}
-	*/
+		return true, e.writeString(key, t.Error())
+	}
 	if t, ok := itype.(time.Time); ok {
 		if t.IsZero() {
 			return true, nil

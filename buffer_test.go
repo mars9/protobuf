@@ -11,8 +11,6 @@ func TestEncodeDecodeBuffer(t *testing.T) {
 	t.Parallel()
 
 	enc := NewEncodeBuffer()
-	dec := NewDecodeBuffer()
-
 	for _, v := range structMessages {
 		enc.Reset()
 		if err := enc.Encode(v); err != nil {
@@ -21,7 +19,7 @@ func TestEncodeDecodeBuffer(t *testing.T) {
 
 		m := &testproto.StructMessage{}
 
-		dec.Write(enc.Bytes())
+		dec := NewDecodeBuffer(enc.Bytes())
 		if err := dec.Decode(m); err != nil {
 			t.Fatalf("decode buffer: %v", err)
 		}

@@ -14,19 +14,12 @@ type DecodeBuffer struct {
 }
 
 // NewDecodeBuffer creates and initializes a new DecodeBuffer.
-func NewDecodeBuffer() *DecodeBuffer {
-	b := &buffer{}
+func NewDecodeBuffer(data []byte) *DecodeBuffer {
+	b := buffer(data)
 	return &DecodeBuffer{
-		dec: NewDecoder(b, 0),
-		b:   b,
+		dec: NewDecoder(&b, 0),
+		b:   &b,
 	}
-}
-
-// Write sets the contents of p to the buffer. The return value is the
-// length of p and err is always nil.
-func (b *DecodeBuffer) Write(p []byte) (int, error) {
-	*b.b = p
-	return len(p), nil
 }
 
 // Decode parses the protocol buffer representation in data and places the

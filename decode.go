@@ -123,7 +123,6 @@ func (d *Decoder) decodeStruct(val reflect.Value, fields, size int) error {
 
 var errorType = reflect.TypeOf((*error)(nil)).Elem()
 
-/*
 func (d *Decoder) decodeError(val reflect.Value, v int) (int, bool, error) {
 	if _, ok := val.Interface().(error); ok || val.Type() == errorType {
 		b := make([]byte, v)
@@ -136,15 +135,12 @@ func (d *Decoder) decodeError(val reflect.Value, v int) (int, bool, error) {
 	}
 	return 0, false, nil
 }
-*/
 
 func (d *Decoder) decodeBytes(val reflect.Value, v int) (int, error) {
-	/*
-		n, custom, err := d.decodeError(val, v)
-		if custom {
-			return n, err
-		}
-	*/
+	n, custom, err := d.decodeError(val, v)
+	if custom {
+		return n, err
+	}
 
 	kind := val.Kind()
 	switch kind {
@@ -171,8 +167,7 @@ func (d *Decoder) decodeBytes(val reflect.Value, v int) (int, error) {
 	}
 
 	b := make([]byte, v)
-	n, err := io.ReadFull(d.r, b)
-	if err != nil {
+	if n, err = io.ReadFull(d.r, b); err != nil {
 		return n, err
 	}
 
