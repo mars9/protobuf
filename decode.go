@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// Reader defines the decode reader. Typicall this is a *bufio.Reader.
+// Reader defines the decode reader. Typically this is a *bufio.Reader.
 type Reader interface {
 	io.ByteReader
 	io.Reader
