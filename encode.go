@@ -61,8 +61,8 @@ func (e *Encoder) Encode(v interface{}) error {
 	fields := val.NumField()
 	size := sizeStruct(val, fields)
 
-	var err error
-	if err = WriteLength(e.w, size, e.max); err != nil {
+	err := writeLength(e.w, size, e.max)
+	if err != nil {
 		return err
 	}
 	if err = e.encodeStruct(val, fields); err != nil {

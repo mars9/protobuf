@@ -44,7 +44,7 @@ func (d *Decoder) Decode(v interface{}) error {
 		return errors.New("v must be a pointer to a struct")
 	}
 
-	size, err := ReadLength(d.r, d.max)
+	size, err := readLength(d.r, d.max)
 	if err != nil {
 		return err
 	}
@@ -52,7 +52,7 @@ func (d *Decoder) Decode(v interface{}) error {
 }
 
 func (d *Decoder) decodeNil() error {
-	size, err := ReadLength(d.r, d.max)
+	size, err := readLength(d.r, d.max)
 	if err != nil {
 		return err
 	}

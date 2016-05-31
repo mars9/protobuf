@@ -7,10 +7,10 @@ import (
 
 const maxInt = uint64(^uint(0) >> 1)
 
-// ReadLength reads an varint encoded integer from an io.ByteWriter. Max
+// readLength reads an varint encoded integer from an io.ByteWriter. Max
 // defines the maximum message size that can be read, if max is 0, the
 // maximum message size is not checked.
-func ReadLength(r io.ByteReader, max int) (int, error) {
+func readLength(r io.ByteReader, max int) (int, error) {
 	size, _, err := readUvarint(r)
 	if err != nil {
 		return 0, err
@@ -26,10 +26,10 @@ func ReadLength(r io.ByteReader, max int) (int, error) {
 	return msize, nil
 }
 
-// WriteLength encodes size and writes it to an io.ByteWriter. Max defines
+// writeLength encodes size and writes it to an io.ByteWriter. Max defines
 // the maximum message size that can be read, if max is 0, the maximum
 // message size is not checked.
-func WriteLength(w io.ByteWriter, size, max int) error {
+func writeLength(w io.ByteWriter, size, max int) error {
 	if max > 0 && size > max {
 		return errors.New("message too large")
 	}
