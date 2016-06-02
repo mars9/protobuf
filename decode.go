@@ -51,6 +51,13 @@ func (d *Decoder) Decode(v interface{}) error {
 	return d.decodeStruct(val.Elem(), val.Elem().NumField(), size)
 }
 
+// Reset discards any buffered data, resets all state, and switches the
+// decoder reader to read from r.
+func (d *Decoder) Reset(r Reader, max int) {
+	d.max = max
+	d.r = r
+}
+
 func (d *Decoder) decodeNil() error {
 	size, err := readLength(d.r, d.max)
 	if err != nil {
