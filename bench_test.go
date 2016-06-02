@@ -12,7 +12,6 @@ import (
 )
 
 var (
-	benchBytes [][]byte
 	benchSlice = &testproto.SliceMessage{
 		Int32:   []int32{math.MinInt32, math.MaxInt32, math.MinInt32, math.MaxInt32, math.MinInt32, math.MaxInt32},
 		Int64:   []int64{math.MinInt64, math.MaxInt64, math.MinInt64, math.MaxInt64, math.MinInt64, math.MaxInt64},
@@ -22,6 +21,7 @@ var (
 		Float64: []float64{math.SmallestNonzeroFloat64, math.SmallestNonzeroFloat64, math.SmallestNonzeroFloat64},
 		Bool:    []bool{false, true, false, true, false, true, true, false, false, true, true, false, true, true},
 	}
+	//encodedBuffer = proto.NewBuffer(nil)
 )
 
 func init() {
@@ -33,6 +33,38 @@ func init() {
 			panic("out of entropy")
 		}
 		benchSlice.String_[i] = string(benchSlice.Bytes[i])
+	}
+
+	//if err := encodedBuffer.Marshal(benchSlice); err != nil {
+	//	panic("marshal benchslice: " + err.Error())
+	//}
+}
+
+func BenchmarkProtobufStreamEncode(b *testing.B) {
+	buf := bytes.NewBuffer(nil)
+	enc := NewEncoder(buf, 0)
+
+	for i := 0; i < b.N; i++ {
+		buf.Reset()
+		if err := enc.Encode(benchSlice); err != nil {
+			b.Fatalf("stream encode: %v", err)
+		}
+	}
+}
+
+func BenchmarkProtobufBufferEncode(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		if _, err := Marshal(nil, benchSlice); err != nil {
+			b.Fatalf("protobuf marshal: %v", err)
+		}
+	}
+}
+
+func BenchmarkGoogleProtobufEncode(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		if _, err := proto.Marshal(benchSlice); err != nil {
+			b.Fatalf("google protobuf marshal: %v", err)
+		}
 	}
 }
 
