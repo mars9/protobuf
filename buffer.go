@@ -1,86 +1,26 @@
 package protobuf
 
-import (
-	"errors"
-	"io"
-	"reflect"
-)
+import "io"
 
-// DecodeBuffer is a buffer for decoding Protocol Buffers. It may be reused
-// between invocations to save alloctions.
-type DecodeBuffer struct {
-	dec *Decoder
-	b   *buffer
-}
-
-// NewDecodeBuffer creates and initializes a new DecodeBuffer.
-func NewDecodeBuffer(data []byte) *DecodeBuffer {
+// Marshal traverses the value v recursively returns the protocol buffer
+// encoding of v. The returned slice may be a sub- slice of data if data
+// was large enough to hold the entire encoded block. Otherwise, a newly
+// allocated slice will be returned.
+func Marshal(data []byte, v interface{}) ([]byte, error) {
 	b := buffer(data)
-	return &DecodeBuffer{
-		dec: NewDecoder(&b, 0),
-		b:   &b,
+	if err := NewEncoder(&b, 0).Encode(v); err != nil {
+		return nil, err
 	}
+	return b, nil
 }
 
-// Decode parses the protocol buffer representation in data and places the
-// decoded result in v. If the struct underlying v does not match the data,
-// the results can be unpredictable.
-//
-// Decode uses the inverse of the encodings that Marshal uses, allocating
-// slices and pointers as necessary.
-func (b *DecodeBuffer) Decode(v interface{}) error {
-	val := reflect.ValueOf(v)
-	if !val.IsValid() || val.IsNil() {
-		return nil
-	}
-	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Struct {
-		return errors.New("v must be a pointer to a struct")
-	}
-
-	val = val.Elem()
-	return b.dec.decodeStruct(val, val.NumField(), len(*b.b))
+// Unmarshal parses the protocol buffer encoded data and stores the
+// result in the value pointed to by v. Unmarshal uses the inverse of
+// the encodings that Marshal uses
+func Unmarshal(data []byte, v interface{}) error {
+	b := buffer(data)
+	return NewDecoder(&b, 0).Decode(v)
 }
-
-// EncodeBuffer is a buffer for encoding Protocol Buffers. It may be reused
-// between invocations to save alloctions.
-type EncodeBuffer struct {
-	enc *Encoder
-	b   *buffer
-}
-
-// NewEncodeBuffer creates and initializes a new EncodeBuffer.
-func NewEncodeBuffer() *EncodeBuffer {
-	b := &buffer{}
-	return &EncodeBuffer{
-		enc: NewEncoder(b, 0),
-		b:   b,
-	}
-}
-
-// Encode traverses the value v recursively and returns the protocol buffer
-// encoding of v. The struct underlying v must be a pointer.
-//
-// Encode currently encodes all visible field, which does not allow
-// distinction between 'required' and 'optional' fields. Encode ignores
-// unsupported struct field types.
-func (b *EncodeBuffer) Encode(v interface{}) error {
-	val := reflect.ValueOf(v)
-	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Struct {
-		return errors.New("v must be a pointer to a struct")
-	}
-
-	val = val.Elem()
-	return b.enc.encodeStruct(val, val.NumField())
-}
-
-// Bytes returns a slice of the contents of the buffer.
-func (b *EncodeBuffer) Bytes() []byte { return *b.b }
-
-// Len returns the number of bytes of the slice.
-func (b *EncodeBuffer) Len() int { return len(*b.b) }
-
-// Reset resets the buffer so it has no content.
-func (b *EncodeBuffer) Reset() { *b.b = (*b.b)[0:0] }
 
 type buffer []byte
 

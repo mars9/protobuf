@@ -10,18 +10,16 @@ import (
 func TestEncodeDecodeBuffer(t *testing.T) {
 	t.Parallel()
 
-	enc := NewEncodeBuffer()
 	for _, v := range structMessages {
-		enc.Reset()
-		if err := enc.Encode(v); err != nil {
-			t.Fatalf("encode buffer: %v", err)
+		encData, err := Marshal(nil, v)
+		if err != nil {
+			t.Fatalf("marshal: %v", err)
 		}
 
-		m := &testproto.StructMessage{}
 
-		dec := NewDecodeBuffer(enc.Bytes())
-		if err := dec.Decode(m); err != nil {
-			t.Fatalf("decode buffer: %v", err)
+		m := &testproto.StructMessage{}
+		if err := Unmarshal(encData, m); err != nil {
+			t.Fatalf("unmarshal: %v", err)
 		}
 
 		if !reflect.DeepEqual(v, m) {
