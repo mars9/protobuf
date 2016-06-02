@@ -22,10 +22,6 @@ type Writer interface {
 	io.Writer
 }
 
-type flusher interface {
-	Flush() error
-}
-
 // Encoder manages the transmission of type and data information to the
 // other side of a connection.
 type Encoder struct {
@@ -61,17 +57,10 @@ func (e *Encoder) Encode(v interface{}) error {
 	fields := val.NumField()
 	size := sizeStruct(val, fields)
 
-	err := writeLength(e.w, size, e.max)
-	if err != nil {
+	if err := writeLength(e.w, size, e.max); err != nil {
 		return err
 	}
-	if err = e.encodeStruct(val, fields); err != nil {
-		return err
-	}
-	if f, ok := e.w.(flusher); ok {
-		return f.Flush()
-	}
-	return err
+	return e.encodeStruct(val, fields)
 }
 
 func (e *Encoder) encodeStruct(val reflect.Value, fields int) error {
