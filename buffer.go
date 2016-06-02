@@ -16,7 +16,7 @@ func Marshal(data []byte, v interface{}) ([]byte, error) {
 
 // Unmarshal parses the protocol buffer encoded data and stores the
 // result in the value pointed to by v. Unmarshal uses the inverse of
-// the encodings that Marshal uses
+// the encodings that Marshal uses.
 func Unmarshal(data []byte, v interface{}) error {
 	b := buffer(data)
 	return NewDecoder(&b, 0).Decode(v)
