@@ -1,5 +1,4 @@
 syntax = "proto3";
-
 package proto;
 
 message TypesMessage {
@@ -31,3 +30,11 @@ message StructMessage {
 	SliceMessage slices = 2;
 }
 
+message NestedStruct {
+	int32 arg = 1;
+}
+
+message Struct {
+	NestedStruct NestedStruct = 1;
+	int32 arg                 = 2;
+}
