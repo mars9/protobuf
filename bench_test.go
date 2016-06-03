@@ -3,6 +3,7 @@ package protobuf
 import (
 	"bytes"
 	"crypto/rand"
+	"encoding/gob"
 	"io"
 	"math"
 	"testing"
@@ -68,19 +69,29 @@ func BenchmarkGoogleProtobufEncode(b *testing.B) {
 	}
 }
 
-func BenchmarkProtobufStream(b *testing.B) {
-	v := &testproto.SliceMessage{}
+func BenchmarkGobEncode(b *testing.B) {
 	buf := bytes.NewBuffer(nil)
-	enc := NewEncoder(buf, 0)
-	dec := NewDecoder(nil, 0)
+	enc := gob.NewEncoder(buf)
 
 	for i := 0; i < b.N; i++ {
 		buf.Reset()
 		if err := enc.Encode(benchSlice); err != nil {
+			b.Fatalf("gob encode: %v", err)
+		}
+	}
+}
+
+func BenchmarkProtobufStream(b *testing.B) {
+	v := &testproto.SliceMessage{}
+	buf := bytes.NewBuffer(nil)
+	enc := NewEncoder(buf, 0)
+	dec := NewDecoder(buf, 0)
+
+	for i := 0; i < b.N; i++ {
+		if err := enc.Encode(benchSlice); err != nil {
 			b.Fatalf("stream encode: %v", err)
 		}
 
-		dec.Reset(buf, 0)
 		v.Reset()
 		if err := dec.Decode(v); err != nil {
 			b.Fatalf("stream encode: %v", err)
@@ -114,6 +125,24 @@ func BenchmarkGoogleProtobuf(b *testing.B) {
 		v.Reset()
 		if err := proto.Unmarshal(data, v); err != nil {
 			b.Fatalf("google protobuf unmarshal: %v", err)
+		}
+	}
+}
+
+func BenchmarkGob(b *testing.B) {
+	v := &testproto.SliceMessage{}
+	buf := bytes.NewBuffer(nil)
+	enc := gob.NewEncoder(buf)
+	dec := gob.NewDecoder(buf)
+
+	for i := 0; i < b.N; i++ {
+		if err := enc.Encode(benchSlice); err != nil {
+			b.Fatalf("stream encode: %v", err)
+		}
+
+		v.Reset()
+		if err := dec.Decode(v); err != nil {
+			b.Fatalf("stream encode: %v", err)
 		}
 	}
 }

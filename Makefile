@@ -10,4 +10,4 @@ protobuf:
 	protoc --go_out=. internal/proto/test.proto
 
 bench:
-	go test -benchmem -count 5 -bench .
+	go test -benchmem -bench .
