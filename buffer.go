@@ -47,9 +47,6 @@ func Unmarshal(data []byte, v interface{}) error {
 		return errors.New("v must be a pointer to a struct")
 	}
 
-	//b := buffer(data)
-	//dec := NewDecoder(&b, 0)
-	//return dec.decodeStruct(val.Elem(), val.Elem().NumField(), len(data))
 	return decodeStruct(val.Elem(), data, false)
 }
 
