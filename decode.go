@@ -54,7 +54,6 @@ func (d *Decoder) Decode(v interface{}) error {
 		return err
 	}
 	return decodeStruct(val.Elem(), data, true)
-	//	return d.decodeStruct(val.Elem(), val.Elem().NumField(), size)
 }
 
 // Reset discards any buffered data, resets all state, and switches the

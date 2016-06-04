@@ -3,6 +3,7 @@ package protobuf
 import (
 	"errors"
 	"io"
+	"sync"
 )
 
 const maxInt = uint64(^uint(0) >> 1)
@@ -65,8 +66,15 @@ func writeUvarint(w io.ByteWriter, v uint64) (err error) {
 	return w.WriteByte(byte(v))
 }
 
+var (
+	pool64 = sync.Pool{New: func() interface{} { return [8]byte{} }}
+	pool32 = sync.Pool{New: func() interface{} { return [4]byte{} }}
+)
+
 func readFixed32(r io.Reader) (uint32, error) {
-	var b [4]byte
+	b := pool32.Get().([4]byte)
+	defer pool32.Put(b)
+
 	if _, err := io.ReadFull(r, b[:]); err != nil {
 		return 0, err
 	}
@@ -78,7 +86,9 @@ func readFixed32(r io.Reader) (uint32, error) {
 }
 
 func writeFixed32(w io.Writer, v uint32) error {
-	var b [4]byte
+	b := pool32.Get().([4]byte)
+	defer pool32.Put(b)
+
 	b[0] = byte(v)
 	b[1] = byte(v >> 8)
 	b[2] = byte(v >> 16)
@@ -89,7 +99,9 @@ func writeFixed32(w io.Writer, v uint32) error {
 }
 
 func readFixed64(r io.Reader) (uint64, error) {
-	var b [8]byte
+	b := pool64.Get().([8]byte)
+	defer pool64.Put(b)
+
 	if _, err := io.ReadFull(r, b[:]); err != nil {
 		return 0, err
 	}
@@ -105,7 +117,9 @@ func readFixed64(r io.Reader) (uint64, error) {
 }
 
 func writeFixed64(w io.Writer, v uint64) error {
-	var b [8]byte
+	b := pool64.Get().([8]byte)
+	defer pool64.Put(b)
+
 	b[0] = byte(v)
 	b[1] = byte(v >> 8)
 	b[2] = byte(v >> 16)
