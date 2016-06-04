@@ -1,6 +1,7 @@
 package protobuf
 
 import (
+	"encoding/binary"
 	"errors"
 	"io"
 	"io/ioutil"
@@ -48,7 +49,12 @@ func (d *Decoder) Decode(v interface{}) error {
 	if err != nil {
 		return err
 	}
-	return d.decodeStruct(val.Elem(), val.Elem().NumField(), size)
+	data := make([]byte, size)
+	if _, err = io.ReadFull(d.r, data); err != nil {
+		return err
+	}
+	return decodeStruct(val.Elem(), data, true)
+	//	return d.decodeStruct(val.Elem(), val.Elem().NumField(), size)
 }
 
 // Reset discards any buffered data, resets all state, and switches the
@@ -78,51 +84,64 @@ func (d *Decoder) decodeNil() error {
 	return nil
 }
 
-func (d *Decoder) decodeStruct(val reflect.Value, fields, size int) error {
+func decodeStruct(val reflect.Value, data []byte, unsafe bool) error {
+	fields, size := val.NumField(), len(data)
 	var field reflect.Value
-	var n, fnum int
-	var v uint64
 	var err error
 	for off := 0; off < size && err == nil; {
-		if v, n, err = readUvarint(d.r); err != nil {
-			return err
+		key, n := binary.Uvarint(data[off:])
+		if n <= 0 {
+			return errors.New("invalid field key")
 		}
 		off += n
 
-		fnum = int(v >> 3)
+		fnum := int(key >> 3)
 		if fnum > 0 && fnum <= fields {
 			field = val.Field(fnum - 1)
 		} else {
 			break
 		}
 
-		switch v & 7 {
+		switch key & 7 {
 		case wireVarint:
-			if v, n, err = readUvarint(d.r); err != nil {
+			v, n := binary.Uvarint(data[off:])
+			if n <= 0 {
+				return errors.New("bad varint value")
+			}
+			if err = decodeUvarint(field, v); err != nil {
 				return err
 			}
 			off += n
-			err = d.decodeUvarint(field, v)
 		case wireFixed32:
-			v1, err := readFixed32(d.r)
-			if err != nil {
+			if off+4 >= size {
+				return errors.New("bad 32-bit value")
+			}
+			v := binary.LittleEndian.Uint32(data[off:])
+			if err = decodeFixed32(field, v); err != nil {
 				return err
 			}
 			off += 4
-			err = d.decodeFixed32(field, v1)
 		case wireFixed64:
-			if v, err = readFixed64(d.r); err != nil {
+			if off+8 >= size {
+				return errors.New("bad 64-bit value")
+			}
+			v := binary.LittleEndian.Uint64(data[off:])
+			if err = decodeFixed64(field, v); err != nil {
 				return err
 			}
 			off += 8
-			err = d.decodeFixed64(field, v)
 		case wireBytes:
-			if v, n, err = readUvarint(d.r); err != nil {
+			v, n := binary.Uvarint(data[off:])
+			if n <= 0 {
+				return errors.New("bad varint size value")
+			}
+			m := int(v)
+			off += n
+			err = decodeBytes(field, data[off:off+m], unsafe)
+			if err != nil {
 				return err
 			}
-			off += n
-			n, err = d.decodeBytes(field, int(v))
-			off += n
+			off += m
 		}
 	}
 	return err
@@ -130,71 +149,64 @@ func (d *Decoder) decodeStruct(val reflect.Value, fields, size int) error {
 
 var errorType = reflect.TypeOf((*error)(nil)).Elem()
 
-func (d *Decoder) decodeError(val reflect.Value, v int) (int, bool, error) {
+func decodeError(val reflect.Value, v []byte) (bool, error) {
 	if _, ok := val.Interface().(error); ok || val.Type() == errorType {
-		b := make([]byte, v)
-		n, err := io.ReadFull(d.r, b)
-		if err != nil {
-			return n, true, err
-		}
-		val.Set(reflect.ValueOf(errors.New(string(b))))
-		return n, true, nil
+		val.Set(reflect.ValueOf(errors.New(string(v))))
+		return true, nil
 	}
-	return 0, false, nil
+	return false, nil
 }
 
-func (d *Decoder) decodeBytes(val reflect.Value, v int) (int, error) {
-	n, custom, err := d.decodeError(val, v)
+func decodeBytes(val reflect.Value, v []byte, unsafe bool) error {
+	custom, err := decodeError(val, v)
 	if custom {
-		return n, err
+		return err
 	}
 
 	kind := val.Kind()
 	switch kind {
 	case reflect.Interface:
-		return v, d.decodeStruct(val.Elem(), val.Elem().NumField(), v)
+		return decodeStruct(val.Elem(), v, unsafe)
 	case reflect.Struct:
-		return v, d.decodeStruct(val, val.NumField(), v)
+		return decodeStruct(val, v, unsafe)
 	case reflect.Slice:
 		switch val.Type().Elem().Kind() {
 		case reflect.Slice, reflect.Struct, reflect.Ptr:
 			elem := reflect.New(val.Type().Elem()).Elem()
-			n, err := d.decodeBytes(elem, v)
-			if err != nil {
-				return n, err
+			if err = decodeBytes(elem, v, unsafe); err != nil {
+				return err
 			}
 			val.Set(reflect.Append(val, elem))
-			return n, err
+			return nil
 		}
 	case reflect.Ptr:
 		if val.IsNil() {
 			val.Set(reflect.New(val.Type().Elem()))
 		}
-		return d.decodeBytes(val.Elem(), v)
-	}
-
-	b := make([]byte, v)
-	if n, err = io.ReadFull(d.r, b); err != nil {
-		return n, err
+		return decodeBytes(val.Elem(), v, unsafe)
 	}
 
 	switch kind {
 	case reflect.String:
-		val.SetString(string(b))
+		val.SetString(string(v))
 	case reflect.Slice:
 		switch val.Type().Elem().Kind() {
 		case reflect.String:
 			elem := reflect.New(val.Type().Elem()).Elem()
-			elem.SetString(string(b))
+			elem.SetString(string(v))
 			val.Set(reflect.Append(val, elem))
 		case reflect.Uint8: // []byte
-			val.SetBytes(b)
+			if !unsafe {
+				val.SetBytes(append([]byte(nil), v...))
+			} else {
+				val.SetBytes(v)
+			}
 		}
 	}
-	return n, err
+	return err
 }
 
-func (d *Decoder) decodeUvarint(val reflect.Value, v uint64) error {
+func decodeUvarint(val reflect.Value, v uint64) error {
 	if _, ok := val.Interface().(time.Time); ok {
 		ns := int64(v)
 		t := time.Unix(ns/int64(time.Second), ns%int64(time.Second))
@@ -213,10 +225,10 @@ func (d *Decoder) decodeUvarint(val reflect.Value, v uint64) error {
 		if val.IsNil() {
 			val.Set(reflect.New(val.Type().Elem()))
 		}
-		return d.decodeUvarint(val.Elem(), v)
+		return decodeUvarint(val.Elem(), v)
 	case reflect.Slice:
 		elem := reflect.New(val.Type().Elem()).Elem()
-		if err := d.decodeUvarint(elem, v); err != nil {
+		if err := decodeUvarint(elem, v); err != nil {
 			return err
 		}
 		val.Set(reflect.Append(val, elem))
@@ -224,22 +236,22 @@ func (d *Decoder) decodeUvarint(val reflect.Value, v uint64) error {
 	return nil
 }
 
-func (d *Decoder) decodeFixed64(val reflect.Value, v uint64) error {
+func decodeFixed64(val reflect.Value, v uint64) error {
 	switch val.Kind() {
 	//case reflect.Int64:
-	//	return setInt(val, int64(v))
+	//  return setInt(val, int64(v))
 	//case reflect.Uint64:
-	//	return setUint(val, v)
+	//  return setUint(val, v)
 	case reflect.Float64:
 		return setFloat(val, math.Float64frombits(v))
 	case reflect.Ptr:
 		if val.IsNil() {
 			val.Set(reflect.New(val.Type().Elem()))
 		}
-		return d.decodeFixed64(val.Elem(), v)
+		return decodeFixed64(val.Elem(), v)
 	case reflect.Slice:
 		elem := reflect.New(val.Type().Elem()).Elem()
-		if err := d.decodeFixed64(elem, v); err != nil {
+		if err := decodeFixed64(elem, v); err != nil {
 			return err
 		}
 		val.Set(reflect.Append(val, elem))
@@ -247,22 +259,22 @@ func (d *Decoder) decodeFixed64(val reflect.Value, v uint64) error {
 	return nil
 }
 
-func (d *Decoder) decodeFixed32(val reflect.Value, v uint32) error {
+func decodeFixed32(val reflect.Value, v uint32) error {
 	switch val.Kind() {
 	//case reflect.Int32:
-	//	return setInt(val, int64(int32(v)))
+	//  return setInt(val, int64(int32(v)))
 	//case reflect.Uint32:
-	//	return setUint(val, uint64(v))
+	//  return setUint(val, uint64(v))
 	case reflect.Float32:
 		return setFloat(val, float64(math.Float32frombits(v)))
 	case reflect.Ptr:
 		if val.IsNil() {
 			val.Set(reflect.New(val.Type().Elem()))
 		}
-		return d.decodeFixed32(val.Elem(), v)
+		return decodeFixed32(val.Elem(), v)
 	case reflect.Slice:
 		elem := reflect.New(val.Type().Elem()).Elem()
-		if err := d.decodeFixed32(elem, v); err != nil {
+		if err := decodeFixed32(elem, v); err != nil {
 			return err
 		}
 		val.Set(reflect.Append(val, elem))

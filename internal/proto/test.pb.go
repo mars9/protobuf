@@ -28,9 +28,7 @@ var _ = math.Inf
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
-// A compilation error at this line likely means your copy of the
-// proto package needs to be updated.
-const _ = proto1.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto1.ProtoPackageIsVersion1
 
 type TypesMessage struct {
 	Uint32  uint32  `protobuf:"varint,1,opt,name=Uint32,json=uint32" json:"Uint32,omitempty"`

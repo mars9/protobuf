@@ -6,10 +6,16 @@ import (
 	"reflect"
 )
 
-// Marshal traverses the value v recursively returns the protocol buffer
-// encoding of v. The returned slice may be a sub- slice of data if data
-// was large enough to hold the entire encoded block. Otherwise, a newly
-// allocated slice will be returned.
+// Marshal traverses the value v recursively and returns the protocol
+// buffer encoding of v. The struct underlying v must be a pointer.
+//
+// Marshal currently encodes all visible field, which does not allow
+// distinction between 'required' and 'optional' fields. Marshal ignores
+// unsupported struct field types.
+//
+// The returned slice may be a sub- slice of data if data was large
+// enough to hold the entire encoded block. Otherwise, a newly allocated
+// slice will be returned.
 func Marshal(data []byte, v interface{}) ([]byte, error) {
 	val := reflect.ValueOf(v)
 	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Struct {
@@ -26,21 +32,46 @@ func Marshal(data []byte, v interface{}) ([]byte, error) {
 	return b, nil
 }
 
-// Unmarshal parses the protocol buffer encoded data and stores the
-// result in the value pointed to by v. Unmarshal uses the inverse of
-// the encodings that Marshal uses.
+// Unmarshal parses the protocol buffer representation in data and places
+// the decoded result in v. If the struct underlying v does not match the
+// data, the results can be unpredictable.
+//
+// Unmarshal uses the inverse of the encodings that Marshal uses,
+// allocating slices and pointers as necessary.
 func Unmarshal(data []byte, v interface{}) error {
 	val := reflect.ValueOf(v)
 	if !val.IsValid() || val.IsNil() {
-		//return d.decodeNil() // TODO(mason)
+		return nil
 	}
 	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Struct {
 		return errors.New("v must be a pointer to a struct")
 	}
 
-	b := buffer(data)
-	dec := NewDecoder(&b, 0)
-	return dec.decodeStruct(val.Elem(), val.Elem().NumField(), len(data))
+	//b := buffer(data)
+	//dec := NewDecoder(&b, 0)
+	//return dec.decodeStruct(val.Elem(), val.Elem().NumField(), len(data))
+	return decodeStruct(val.Elem(), data, false)
+}
+
+// UnmarshalUnsafe parses the protocol buffer representation in data and
+// places the decoded result in v. If the struct underlying v does not
+// match the data, the results can be unpredictable.
+//
+// UnmarshalUnsafe uses the inverse of the encodings that Marshal uses,
+// allocating slices and pointers as necessary.
+//
+// UnmarshalUnsafe does not copy raw byte slices. Most code should use
+// Unmarshal instead.
+func UnmarshalUnsafe(data []byte, v interface{}) error {
+	val := reflect.ValueOf(v)
+	if !val.IsValid() || val.IsNil() {
+		return nil
+	}
+	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Struct {
+		return errors.New("v must be a pointer to a struct")
+	}
+
+	return decodeStruct(val.Elem(), data, true)
 }
 
 type buffer []byte

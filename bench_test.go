@@ -114,6 +114,21 @@ func BenchmarkProtobufBuffer(b *testing.B) {
 	}
 }
 
+func BenchmarkProtobufBufferUnsafe(b *testing.B) {
+	v := &testproto.SliceMessage{}
+	for i := 0; i < b.N; i++ {
+		data, err := Marshal(nil, benchSlice)
+		if err != nil {
+			b.Fatalf("protobuf marshal: %v", err)
+		}
+
+		v.Reset()
+		if err := UnmarshalUnsafe(data, v); err != nil {
+			b.Fatalf("protobuf unmarshal: %v", err)
+		}
+	}
+}
+
 func BenchmarkGoogleProtobuf(b *testing.B) {
 	v := &testproto.SliceMessage{}
 	for i := 0; i < b.N; i++ {
