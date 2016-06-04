@@ -1,1 +1,3 @@
-c.out
+protobuf.test
+*.prof
+*.out

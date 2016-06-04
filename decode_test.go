@@ -92,20 +92,14 @@ var (
 func TestTypeDecode(t *testing.T) {
 	t.Parallel()
 
-	//buf := bytes.NewBuffer(nil)
-	//dec := NewDecoder(buf, 0)
-
 	for _, v := range typesMessages {
 		data, err := proto.Marshal(v)
 		if err != nil {
 			t.Fatalf("marshal protobuf: %v", err)
 		}
 
-		//buf.Write(data)
-
 		m := &testproto.TypesMessage{}
 		val := reflect.ValueOf(m)
-		//fields, n := val.Elem().NumField(), len(data)
 		if err = decodeStruct(val.Elem(), data, true); err != nil {
 			t.Fatalf("decode type: %v", err)
 		}
@@ -119,20 +113,14 @@ func TestTypeDecode(t *testing.T) {
 func TestSliceDecode(t *testing.T) {
 	t.Parallel()
 
-	//buf := bytes.NewBuffer(nil)
-	//dec := NewDecoder(buf, 0)
-
 	for _, v := range sliceMessages {
 		data, err := proto.Marshal(v)
 		if err != nil {
 			t.Fatalf("marshal protobuf: %v", err)
 		}
 
-		//buf.Write(data)
-
 		m := &testproto.SliceMessage{}
 		val := reflect.ValueOf(m)
-		//fields, n := val.Elem().NumField(), len(data)
 		if err = decodeStruct(val.Elem(), data, true); err != nil {
 			t.Fatalf("decode slice: %v", err)
 		}
@@ -146,20 +134,14 @@ func TestSliceDecode(t *testing.T) {
 func TestStrucDecode(t *testing.T) {
 	t.Parallel()
 
-	//buf := bytes.NewBuffer(nil)
-	//dec := NewDecoder(buf, 0)
-
 	for _, v := range structMessages {
 		data, err := proto.Marshal(v)
 		if err != nil {
 			t.Fatalf("marshal protobuf: %v", err)
 		}
 
-		//buf.Write(data)
-
 		m := &testproto.StructMessage{}
 		val := reflect.ValueOf(m)
-		//fields, n := val.Elem().NumField(), len(data)
 		if err = decodeStruct(val.Elem(), data, true); err != nil {
 			t.Fatalf("decode struct: %v", err)
 		}

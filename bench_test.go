@@ -22,6 +22,17 @@ var (
 		Float64: []float64{math.SmallestNonzeroFloat64, math.SmallestNonzeroFloat64, math.SmallestNonzeroFloat64},
 		Bool:    []bool{false, true, false, true, false, true, true, false, false, true, true, false, true, true},
 	}
+	benchSimple = &testproto.TypesMessage{
+		Uint32:  math.MaxUint32,
+		Uint64:  math.MaxUint64,
+		Int32:   math.MaxInt32,
+		Int64:   math.MaxInt64,
+		Float32: math.MaxFloat32,
+		Float64: math.MaxFloat64,
+		Bool:    true,
+		String_: testString,
+		Bytes:   testBytes[:],
+	}
 	//encodedBuffer = proto.NewBuffer(nil)
 )
 
@@ -152,6 +163,24 @@ func BenchmarkGob(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		if err := enc.Encode(benchSlice); err != nil {
+			b.Fatalf("stream encode: %v", err)
+		}
+
+		v.Reset()
+		if err := dec.Decode(v); err != nil {
+			b.Fatalf("stream encode: %v", err)
+		}
+	}
+}
+
+func BenchmarkProfile(b *testing.B) {
+	v := &testproto.TypesMessage{}
+	buf := bytes.NewBuffer(nil)
+	enc := NewEncoder(buf, 0)
+	dec := NewDecoder(buf, 0)
+
+	for i := 0; i < b.N; i++ {
+		if err := enc.Encode(benchSimple); err != nil {
 			b.Fatalf("stream encode: %v", err)
 		}
 
